@@ -1,0 +1,80 @@
+<div class="ide-layout">
+  
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h4>Explorador</h4>
+      <div class="actions">
+        <button (click)="createFile()" title="Crear Archivo">📄+</button>
+        <button (click)="createProject()" title="Crear Proyecto">📁+</button>
+      </div>
+    </div>
+    <div class="file-tree">
+      <div 
+        *ngFor="let file of files" 
+        class="file-item" 
+        (click)="openFile(file)"
+        [class.active]="file === activeFile">
+        {{ file.name }}
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    
+    <div class="top-section">
+      
+      <div class="editor-area">
+        <div class="tabs-bar">
+          <div 
+            *ngFor="let tab of openTabs" 
+            class="tab" 
+            [class.active]="tab === activeFile"
+            (click)="selectTab(tab)">
+            {{ tab.name }}
+            <span class="close-btn" (click)="closeTab(tab, $event)">×</span>
+          </div>
+        </div>
+
+        <div class="editor-workspace" *ngIf="activeFile; else noFileTpl">
+          
+          <div class="line-numbers" #lineNumbersContainer>
+            <div *ngFor="let line of lineNumbers">{{ line }}</div>
+          </div>
+          
+          <textarea 
+            class="code-input" 
+            [value]="editorContent"
+            (keyup)="updateCursor($event)"
+            (click)="updateCursor($event)"
+            (scroll)="syncScroll($event)" 
+            spellcheck="false"
+            wrap="off">
+          </textarea>
+        </div>
+        
+        <ng-template #noFileTpl>
+          <div class="no-file-msg">Selecciona o crea un archivo para empezar a editar.</div>
+        </ng-template>
+
+        <div class="status-bar">
+          FILA {{ cursorRow }} ; COLUMNA {{ cursorCol }}
+        </div>
+      </div>
+
+      <div class="preview-area">
+        <div class="panel-header">Vista previa</div>
+        <div class="preview-content">
+          <p>La vista previa se renderizará aquí...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal-area">
+      <div class="panel-header">Terminal o emulador de terminal</div>
+      <div class="terminal-content">
+        <textarea class="terminal-input" readonly>Xavi@XaviPc:~$ Compilador iniciado...</textarea>
+      </div>
+    </div>
+
+  </div>
+</div>

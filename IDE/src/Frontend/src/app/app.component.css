@@ -1,0 +1,180 @@
+/* Reset básico para el contenedor */
+.ide-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr; /* Panel izquierdo fijo, resto fluido */
+    height: 100vh;
+    width: 100vw;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-sizing: border-box;
+    background-color: #f3f3f3;
+  }
+  
+  * { box-sizing: border-box; }
+  
+  /* Panel Izquierdo */
+  .sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .sidebar-header {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    h4 { margin: 0; font-size: 14px; }
+    button { cursor: pointer; background: none; border: 1px solid #ccc; border-radius: 3px;}
+  }
+  
+  .file-tree {
+    padding: 10px 0;
+    overflow-y: auto;
+  }
+  
+  .file-item {
+    padding: 5px 15px;
+    cursor: pointer;
+    font-size: 13px;
+    
+    &:hover { background-color: #e9ecef; }
+    &.active { background-color: #007acc; color: white; }
+  }
+  
+  /* Contenido Principal Derecho */
+  .main-content {
+    display: grid;
+    grid-template-rows: 1fr 200px; /* Superior ocupa el resto, terminal 200px abajo */
+    height: 100vh;
+  }
+  
+  /* Sección Superior (Editor + Preview) */
+  .top-section {
+    display: grid;
+    grid-template-columns: 1fr 350px; /* Editor fluido, Vista previa de 350px */
+    border-bottom: 1px solid #ccc;
+    min-height: 0; /* Importante para el scroll en Grid */
+  }
+  
+  /* Área del Editor */
+  .editor-area {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ccc;
+    background-color: #ffffff;
+  }
+  
+  .tabs-bar {
+    display: flex;
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #ccc;
+    overflow-x: auto;
+  }
+  
+  .tab {
+    padding: 8px 15px;
+    border-right: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  
+    &.active { background-color: #2d2d2d; color: white; border-top: 2px solid #007acc; }
+    .close-btn { font-weight: bold; cursor: pointer; }
+    .close-btn:hover { color: #ff4d4d; }
+  }
+  
+  /* El núcleo del editor de texto */
+  .editor-workspace {
+    display: flex;
+    flex: 1;
+    background-color: #2d2d2d; /* Requisito de la nota: fondo gris */
+    overflow: hidden;
+  }
+  
+  .line-numbers {
+    padding: 10px 5px;
+    background-color: #1e1e1e;
+    color: #858585;
+    text-align: right;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    user-select: none;
+    width: 40px;
+    overflow-y: hidden;
+  }
+  
+  .code-input {
+    flex: 1;
+    background-color: transparent;
+    color: #ffffff; /* Requisito de la nota: letra blanca */
+    border: none;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    white-space: pre;
+    overflow: auto;
+  }
+  
+  .no-file-msg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+  }
+  
+  .status-bar {
+    padding: 5px 15px;
+    background-color: #007acc;
+    color: white;
+    font-size: 12px;
+    text-align: right;
+  }
+  
+  /* Áreas comunes (Vista previa y Terminal) */
+  .panel-header {
+    padding: 5px 10px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #ccc;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .preview-area {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+  }
+  
+  .preview-content { padding: 10px; }
+  
+  .terminal-area {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+  }
+  
+  .terminal-content {
+    flex: 1;
+    display: flex;
+  }
+  
+  .terminal-input {
+    flex: 1;
+    background-color: #000000;
+    color: #00ff00;
+    border: none;
+    padding: 10px;
+    font-family: monospace;
+    resize: none;
+    outline: none;
+  }
