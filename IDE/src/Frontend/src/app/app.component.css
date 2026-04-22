@@ -1,127 +1,287 @@
-/* Reset básico para el contenedor */
-.ide-layout {
-    display: grid;
-    grid-template-columns: 250px 1fr; /* Panel izquierdo fijo, resto fluido */
-    height: 100vh;
-    width: 100vw;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    box-sizing: border-box;
-    background-color: #f3f3f3;
-  }
-  
-  * { box-sizing: border-box; }
-  
-  /* Panel Izquierdo */
-  .sidebar {
-    background-color: #ffffff;
-    border-right: 1px solid #ccc;
+/* =========================================
+   1. RESET Y CONTENEDOR PRINCIPAL
+   ========================================= */
+   .ide-wrapper {
     display: flex;
     flex-direction: column;
+    height: 100vh; /* Altura estricta a la ventana */
+    width: 100vw;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden; /* Evita el scroll en toda la página */
+    margin: 0;
+    padding: 0;
+    background-color: #1e1e1e; /* Fondo oscuro base */
+    color: #cccccc;
+  }
+  
+  /* =========================================
+     2. BARRA DE HERRAMIENTAS SUPERIOR
+     ========================================= */
+  .top-toolbar {
+    background-color: #333333;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #2d2d2d;
+    width: 100%;
+    height: 45px;
+    box-sizing: border-box;
+  }
+  
+  .toolbar-group {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .top-toolbar button {
+    background-color: transparent;
+    color: #cccccc;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  .top-toolbar button:hover {
+    background-color: #444444;
+    color: #ffffff;
+  }
+  
+  .top-toolbar button.btn-primary {
+    background-color: #007acc;
+    color: white;
+  }
+  
+  .top-toolbar button.btn-primary:hover {
+    background-color: #005f9e;
+  }
+  
+  /* =========================================
+     3. LAYOUT PRINCIPAL (Flexbox)
+     ========================================= */
+  .ide-layout {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 45px); /* Ocupa el espacio restante exacto */
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  /* =========================================
+     4. BARRA LATERAL (Explorador)
+     ========================================= */
+  .sidebar {
+    width: 250px;
+    background-color: #252526;
+    border-right: 1px solid #3c3c3c;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
   }
   
   .sidebar-header {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
+    padding: 10px 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
-    h4 { margin: 0; font-size: 14px; }
-    button { cursor: pointer; background: none; border: 1px solid #ccc; border-radius: 3px;}
+    color: #bbbbbb;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  
+  .sidebar-header h4 {
+    margin: 0;
+    font-weight: 600;
+  }
+  
+  .sidebar-header .actions button {
+    background: none;
+    border: none;
+    color: #cccccc;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+  
+  .sidebar-header .actions button:hover {
+    background-color: #3c3c3c;
+    color: white;
   }
   
   .file-tree {
-    padding: 10px 0;
+    padding: 5px 0;
     overflow-y: auto;
+    flex: 1;
   }
   
   .file-item {
-    padding: 5px 15px;
+    display: flex;
+    align-items: center;
+    padding: 4px 15px;
     cursor: pointer;
     font-size: 13px;
-    
-    &:hover { background-color: #e9ecef; }
-    &.active { background-color: #007acc; color: white; }
+    position: relative;
+    user-select: none;
+    color: #cccccc;
   }
   
-  /* Contenido Principal Derecho */
+  .file-item:hover {
+    background-color: #2a2d2e;
+    color: #ffffff;
+  }
+  
+  .file-item.active {
+    background-color: #37373d;
+    color: #ffffff;
+  }
+  
+  .node-icon {
+    margin-right: 6px;
+    font-size: 14px;
+  }
+  
+  .node-name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .node-actions {
+    display: none;
+    margin-left: auto;
+  }
+  
+  .file-item:hover .node-actions {
+    display: flex;
+    gap: 4px;
+  }
+  
+  .node-actions button {
+    background: none;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+    color: #cccccc;
+  }
+  
+  .node-actions button:hover {
+    background-color: #555555;
+    color: white;
+  }
+  
+  /* =========================================
+     5. ÁREA DEL EDITOR
+     ========================================= */
   .main-content {
-    display: grid;
-    grid-template-rows: 1fr 200px; /* Superior ocupa el resto, terminal 200px abajo */
-    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-width: 0; /* Evita que el flexbox se desborde horizontalmente */
   }
   
-  /* Sección Superior (Editor + Preview) */
   .top-section {
-    display: grid;
-    grid-template-columns: 1fr 350px; /* Editor fluido, Vista previa de 350px */
-    border-bottom: 1px solid #ccc;
-    min-height: 0; /* Importante para el scroll en Grid */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
   
-  /* Área del Editor */
   .editor-area {
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #ccc;
-    background-color: #ffffff;
+    flex: 1;
+    background-color: #1e1e1e;
+    min-height: 0; /* <-- LA SOLUCIÓN: Obliga al contenedor a no estirarse */
   }
   
   .tabs-bar {
     display: flex;
-    background-color: #f3f3f3;
-    border-bottom: 1px solid #ccc;
+    background-color: #2d2d2d;
     overflow-x: auto;
   }
   
   .tab {
     padding: 8px 15px;
-    border-right: 1px solid #ccc;
+    background-color: #2d2d2d;
+    color: #8a8a8a;
     cursor: pointer;
     font-size: 13px;
     display: flex;
     align-items: center;
     gap: 10px;
-  
-    &.active { background-color: #2d2d2d; color: white; border-top: 2px solid #007acc; }
-    .close-btn { font-weight: bold; cursor: pointer; }
-    .close-btn:hover { color: #ff4d4d; }
+    border-right: 1px solid #1e1e1e;
+    border-top: 2px solid transparent;
   }
   
-  /* El núcleo del editor de texto */
+  .tab:hover {
+    background-color: #1e1e1e;
+  }
+  
+  .tab.active {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-top: 2px solid #007acc; /* Línea azul superior tipo VS Code */
+  }
+  
+  .tab .close-btn {
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.5;
+  }
+  
+  .tab .close-btn:hover {
+    opacity: 1;
+    color: #ff4d4d;
+  }
+  
   .editor-workspace {
     display: flex;
     flex: 1;
-    background-color: #2d2d2d; /* Requisito de la nota: fondo gris */
-    overflow: hidden;
+    background-color: #1e1e1e;
+    overflow: hidden; 
+    min-height: 0; /* <-- LA SOLUCIÓN: Mantiene este espacio fijo */
   }
   
   .line-numbers {
-    padding: 10px 5px;
+    padding: 10px 10px 10px 15px;
     background-color: #1e1e1e;
-    color: #858585;
+    color: #6e7681;
     text-align: right;
-    font-family: monospace;
+    font-family: 'Consolas', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
     user-select: none;
-    width: 40px;
+    min-width: 30px;
     overflow-y: hidden;
+    border-right: 1px solid #3c3c3c;
   }
   
   .code-input {
     flex: 1;
+    height: 100%;
     background-color: transparent;
-    color: #ffffff; /* Requisito de la nota: letra blanca */
+    color: #d4d4d4;
     border: none;
-    padding: 10px;
-    font-family: monospace;
+    padding: 10px 15px;
+    font-family: 'Consolas', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
     resize: none;
     outline: none;
     white-space: pre;
-    overflow: auto;
+    overflow: auto; /* <-- Esto hace que la barra aparezca cuando sea necesario */
+    box-sizing: border-box;
   }
   
   .no-file-msg {
@@ -129,52 +289,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #666;
+    color: #6e7681;
+    font-size: 14px;
   }
   
   .status-bar {
-    padding: 5px 15px;
+    padding: 4px 15px;
     background-color: #007acc;
     color: white;
     font-size: 12px;
     text-align: right;
+    flex-shrink: 0;
   }
   
-  /* Áreas comunes (Vista previa y Terminal) */
-  .panel-header {
-    padding: 5px 10px;
-    background-color: #e9ecef;
-    border-bottom: 1px solid #ccc;
-    font-size: 12px;
-    font-weight: bold;
+  /* =========================================
+     6. SCROLLBARS PERSONALIZADOS (Tema Oscuro)
+     ========================================= */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
   }
   
-  .preview-area {
-    display: flex;
-    flex-direction: column;
-    background-color: #ffffff;
+  ::-webkit-scrollbar-track {
+    background: #1e1e1e;
   }
   
-  .preview-content { padding: 10px; }
-  
-  .terminal-area {
-    display: flex;
-    flex-direction: column;
-    background-color: #ffffff;
+  ::-webkit-scrollbar-thumb {
+    background: #424242;
+    border: 3px solid #1e1e1e; /* Crea un efecto de padding */
+    border-radius: 6px;
   }
   
-  .terminal-content {
-    flex: 1;
-    display: flex;
-  }
-  
-  .terminal-input {
-    flex: 1;
-    background-color: #000000;
-    color: #00ff00;
-    border: none;
-    padding: 10px;
-    font-family: monospace;
-    resize: none;
-    outline: none;
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4f4f4f;
   }

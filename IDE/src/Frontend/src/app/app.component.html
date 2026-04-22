@@ -1,80 +1,94 @@
-<div class="ide-layout">
+<div class="ide-wrapper">
   
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h4>Explorador</h4>
-      <div class="actions">
-        <button (click)="createFile()" title="Crear Archivo">📄+</button>
-        <button (click)="createProject()" title="Crear Proyecto">📁+</button>
-      </div>
-    </div>
-    <div class="file-tree">
-      <div 
-        *ngFor="let file of files" 
-        class="file-item" 
-        (click)="openFile(file)"
-        [class.active]="file === activeFile">
-        {{ file.name }}
-      </div>
+  <div class="top-toolbar">
+    <div class="toolbar-group">
+      <button (click)="exportTree()" title="Exportar estructura a JSON">📤 Exportar Árbol de Trabajo</button>
+      <button (click)="togglePreview()" title="Mostrar/Ocultar vista previa">👁️ Vista Previa</button>
+      <button (click)="analyzeAndTranslate()" class="btn-primary" title="Ejecutar compilador">⚡ Analizar y Traducir Código</button>
+      <button (click)="openTerminal()" title="Abrir terminal o consola">💻 Abrir Terminal</button>
     </div>
   </div>
 
-  <div class="main-content">
+  <div class="ide-layout">
     
-    <div class="top-section">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h4>Explorador</h4>
+        <div class="actions">
+          <button (click)="createFile()" title="Crear Archivo en raíz">📄+</button>
+          <button (click)="createFolder()" title="Crear Carpeta en raíz">📁+</button>
+          <button (click)="openProject()" title="Abrir Proyecto Local">📂</button>
+          <button (click)="saveProyect()" title="Guardar Proyecto">💾</button>
+        </div>
+      </div>
       
-      <div class="editor-area">
-        <div class="tabs-bar">
-          <div 
-            *ngFor="let tab of openTabs" 
-            class="tab" 
-            [class.active]="tab === activeFile"
-            (click)="selectTab(tab)">
-            {{ tab.name }}
-            <span class="close-btn" (click)="closeTab(tab, $event)">×</span>
-          </div>
-        </div>
+      <div class="file-tree">
+        <ng-template #nodeTemplate let-nodes="nodes" let-level="level">
+          <div *ngFor="let node of nodes">
+            <div class="file-item" 
+                 [style.padding-left.px]="15 + (level * 15)" 
+                 (click)="onNodeClick(node)"
+                 [class.active]="node === activeFile">
+              
+              <span class="node-icon">
+                {{ node.type === 'folder' ? (node.isOpen ? '📂' : '📁') : '📄' }}
+              </span>
+              <span class="node-name">{{ node.name }}</span>
 
-        <div class="editor-workspace" *ngIf="activeFile; else noFileTpl">
-          
-          <div class="line-numbers" #lineNumbersContainer>
-            <div *ngFor="let line of lineNumbers">{{ line }}</div>
+              <div class="node-actions" *ngIf="node.type === 'folder'">
+                <button (click)="createFile(node, $event)" title="Nuevo archivo aquí">📄+</button>
+                <button (click)="createFolder(node, $event)" title="Nueva carpeta aquí">📁+</button>
+              </div>
+            </div>
+
+            <div *ngIf="node.type === 'folder' && node.isOpen && node.children">
+              <ng-container *ngTemplateOutlet="nodeTemplate; context: { nodes: node.children, level: level + 1 }"></ng-container>
+            </div>
           </div>
-          
-          <textarea 
-            class="code-input" 
-            [value]="editorContent"
-            (keyup)="updateCursor($event)"
-            (click)="updateCursor($event)"
-            (scroll)="syncScroll($event)" 
-            spellcheck="false"
-            wrap="off">
-          </textarea>
-        </div>
-        
-        <ng-template #noFileTpl>
-          <div class="no-file-msg">Selecciona o crea un archivo para empezar a editar.</div>
         </ng-template>
 
-        <div class="status-bar">
-          FILA {{ cursorRow }} ; COLUMNA {{ cursorCol }}
-        </div>
+        <ng-container *ngTemplateOutlet="nodeTemplate; context: { nodes: fileSystem, level: 0 }"></ng-container>
       </div>
+    </div>
 
-      <div class="preview-area">
-        <div class="panel-header">Vista previa</div>
-        <div class="preview-content">
-          <p>La vista previa se renderizará aquí...</p>
+    <div class="main-content">
+      <div class="top-section">
+        <div class="editor-area">
+          <div class="tabs-bar">
+            <div 
+              *ngFor="let tab of openTabs" 
+              class="tab" 
+              [class.active]="tab === activeFile"
+              (click)="selectTab(tab)">
+              {{ tab.name }}
+              <span class="close-btn" (click)="closeTab(tab, $event)">×</span>
+            </div>
+          </div>
+
+          <div class="editor-workspace" *ngIf="activeFile; else noFileTpl">
+            <div class="line-numbers" #lineNumbersContainer>
+              <div *ngFor="let line of lineNumbers">{{ line }}</div>
+            </div>
+            <textarea 
+              class="code-input" 
+              [value]="editorContent"
+              (keyup)="updateCursor($event)"
+              (click)="updateCursor($event)"
+              (scroll)="syncScroll($event)" 
+              spellcheck="false"
+              wrap="off">
+            </textarea>
+          </div>
+          
+          <ng-template #noFileTpl>
+            <div class="no-file-msg">Selecciona o crea un archivo para empezar a editar.</div>
+          </ng-template>
+
+          <div class="status-bar">
+            FILA {{ cursorRow }} ; COLUMNA {{ cursorCol }}
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="terminal-area">
-      <div class="panel-header">Terminal o emulador de terminal</div>
-      <div class="terminal-content">
-        <textarea class="terminal-input" readonly>Xavi@XaviPc:~$ Compilador iniciado...</textarea>
-      </div>
-    </div>
-
-  </div>
-</div>
+  </div> </div>
