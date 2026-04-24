@@ -1,22 +1,22 @@
-/* =========================================
+/* 
    1. RESET Y CONTENEDOR PRINCIPAL
-   ========================================= */
+    */
    .ide-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Altura estricta a la ventana */
+    height: 100vh;
     width: 100vw;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden; /* Evita el scroll en toda la página */
+    overflow: hidden; 
     margin: 0;
     padding: 0;
-    background-color: #1e1e1e; /* Fondo oscuro base */
+    background-color: #000000; 
     color: #cccccc;
   }
   
-  /* =========================================
+  /* 
      2. BARRA DE HERRAMIENTAS SUPERIOR
-     ========================================= */
+      */
   .top-toolbar {
     background-color: #333333;
     padding: 0 15px;
@@ -62,9 +62,9 @@
     background-color: #005f9e;
   }
   
-  /* =========================================
+  /* 
      3. LAYOUT PRINCIPAL (Flexbox)
-     ========================================= */
+      */
   .ide-layout {
     display: flex;
     flex: 1;
@@ -73,9 +73,9 @@
     overflow: hidden;
   }
   
-  /* =========================================
+  /* 
      4. BARRA LATERAL (Explorador)
-     ========================================= */
+      */
   .sidebar {
     width: 250px;
     background-color: #252526;
@@ -179,15 +179,15 @@
     color: white;
   }
   
-  /* =========================================
+  /* 
      5. ÁREA DEL EDITOR
-     ========================================= */
+     */
   .main-content {
     display: flex;
     flex-direction: column;
     flex: 1;
     height: 100%;
-    min-width: 0; /* Evita que el flexbox se desborde horizontalmente */
+    min-width: 0; 
   }
   
   .top-section {
@@ -202,7 +202,7 @@
     flex-direction: column;
     flex: 1;
     background-color: #1e1e1e;
-    min-height: 0; /* <-- LA SOLUCIÓN: Obliga al contenedor a no estirarse */
+    min-height: 0; 
   }
   
   .tabs-bar {
@@ -231,7 +231,7 @@
   .tab.active {
     background-color: #1e1e1e;
     color: #ffffff;
-    border-top: 2px solid #007acc; /* Línea azul superior tipo VS Code */
+    border-top: 2px solid #007acc; 
   }
   
   .tab .close-btn {
@@ -250,7 +250,7 @@
     flex: 1;
     background-color: #1e1e1e;
     overflow: hidden; 
-    min-height: 0; /* <-- LA SOLUCIÓN: Mantiene este espacio fijo */
+    min-height: 0; 
   }
   
   .line-numbers {
@@ -280,7 +280,7 @@
     resize: none;
     outline: none;
     white-space: pre;
-    overflow: auto; /* <-- Esto hace que la barra aparezca cuando sea necesario */
+    overflow: auto;
     box-sizing: border-box;
   }
   
@@ -302,9 +302,9 @@
     flex-shrink: 0;
   }
   
-  /* =========================================
+  /* 
      6. SCROLLBARS PERSONALIZADOS (Tema Oscuro)
-     ========================================= */
+     */
   ::-webkit-scrollbar {
     width: 12px;
     height: 12px;
@@ -316,7 +316,7 @@
   
   ::-webkit-scrollbar-thumb {
     background: #424242;
-    border: 3px solid #1e1e1e; /* Crea un efecto de padding */
+    border: 3px solid #1e1e1e;
     border-radius: 6px;
   }
   

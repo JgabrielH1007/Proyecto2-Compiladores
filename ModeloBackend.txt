@@ -1,0 +1,20 @@
+Backend
+	Modelos
+		analizadorY
+		analizadorComp
+		analizadorStyle
+	Server
+		conexion fronted
+	Traductores
+		TraductorYJavaScript
+		TraductorCompHtml
+		TraductorStyleCss
+	Errores
+		Error sintactico
+		Error Lexico
+	Clases o funciones
+		Analizador
+		Traductor
+	DataBases
+		
+	

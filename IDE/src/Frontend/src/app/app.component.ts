@@ -1,13 +1,12 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// 1. Nueva estructura jerárquica
 export interface FileSystemNode {
   name: string;
   type: 'file' | 'folder';
   content?: string;
   format?: string;
-  isOpen?: boolean; // Para saber si la carpeta está expandida
+  isOpen?: boolean; 
   children?: FileSystemNode[];
   handle?: any;
 }
@@ -17,12 +16,11 @@ export interface FileSystemNode {
   standalone: true,           
   imports: [CommonModule],    
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css'] // Corregido de scss a css según tus archivos
+  styleUrls: ['./app.component.css'] 
 })
 export class AppComponent {
   @ViewChild('lineNumbers', { static: false }) lineNumbersRef!: ElementRef<HTMLDivElement>;
 
-  // 2. Sistema de archivos estructurado en árbol
   fileSystem: FileSystemNode[] = [
     {
       name: 'src',
@@ -44,10 +42,9 @@ export class AppComponent {
   cursorRow: number = 1;
   cursorCol: number = 1;
 
-  // Lógica para el clic en el árbol
   onNodeClick(node: FileSystemNode) {
     if (node.type === 'folder') {
-      node.isOpen = !node.isOpen; // Alternar expansión de la carpeta
+      node.isOpen = !node.isOpen;
     } else {
       this.openFile(node);
     }
@@ -55,19 +52,16 @@ export class AppComponent {
 
   async openProject() {
     try {
-      // Verificamos si el navegador soporta esta API (Chrome, Edge, Opera)
+      // Verificamos el navegador 
       if (!('showDirectoryPicker' in window)) {
         alert('Tu navegador no soporta la lectura de carpetas locales. Usa Chrome o Edge.');
         return;
       }
 
-      // Abre la ventana para seleccionar carpeta
       const dirHandle = await (window as any).showDirectoryPicker();
       
-      // Reiniciamos el árbol
       this.fileSystem = []; 
       
-      // Creamos el nodo raíz del proyecto
       const rootNode: FileSystemNode = {
         name: dirHandle.name,
         type: 'folder',
@@ -76,14 +70,11 @@ export class AppComponent {
         handle: dirHandle
       };
 
-      // Leemos el contenido recursivamente
       await this.readDirectory(dirHandle, rootNode.children!);
       
-      // Agregamos el proyecto a la vista
       this.fileSystem.push(rootNode);
       
     } catch (err: any) {
-      // El usuario canceló la ventana o denegó los permisos
       if (err.name !== 'AbortError') {
         console.error('Error al abrir el proyecto:', err);
       }
@@ -97,7 +88,7 @@ export class AppComponent {
           name: entry.name,
           type: 'file',
           format: entry.name.split('.').pop() || 'txt',
-          handle: entry // Guardamos la referencia, pero NO leemos el contenido aún
+          handle: entry
         });
       } else if (entry.kind === 'directory') {
         const newFolder: FileSystemNode = {
@@ -108,12 +99,10 @@ export class AppComponent {
           handle: entry
         };
         childrenArray.push(newFolder);
-        // Llamada recursiva para leer subcarpetas
         await this.readDirectory(entry, newFolder.children!);
       }
     }
 
-    // Ordenamos alfabéticamente: primero carpetas, luego archivos
     childrenArray.sort((a, b) => {
       if (a.type === b.type) return a.name.localeCompare(b.name);
       return a.type === 'folder' ? -1 : 1;
@@ -123,11 +112,10 @@ export class AppComponent {
   async openFile(file: FileSystemNode) {
     if (file.type !== 'file') return;
     
-    // Si el archivo viene del disco duro y aún no tiene contenido, lo leemos
     if (file.handle && file.content === undefined) {
       try {
         const fileData = await file.handle.getFile();
-        file.content = await fileData.text(); // Extraemos el texto
+        file.content = await fileData.text(); // extrayendo texto jaja
       } catch (err) {
         console.error("Error al leer el archivo físico:", err);
         file.content = "// Error: No se pudo leer el archivo. (Puede que sea un binario o imagen)";
@@ -154,9 +142,8 @@ export class AppComponent {
     }
   }
 
-  // Crear archivo (en la raíz o dentro de una carpeta)
   createFile(parentFolder?: FileSystemNode, event?: Event) {
-    if (event) event.stopPropagation(); // Evitar que la carpeta se cierre al hacer clic en el botón
+    if (event) event.stopPropagation(); 
 
     const fileName = prompt('Nombre del nuevo archivo:');
     if (!fileName) return;
@@ -165,14 +152,13 @@ export class AppComponent {
 
     if (parentFolder && parentFolder.children) {
       parentFolder.children.push(newFile);
-      parentFolder.isOpen = true; // Asegurar que la carpeta se abra para ver el archivo
+      parentFolder.isOpen = true;
     } else {
       this.fileSystem.push(newFile);
     }
     this.openFile(newFile);
   }
 
-  // Crear carpeta (en la raíz o dentro de una carpeta)
   createFolder(parentFolder?: FileSystemNode, event?: Event) {
     if (event) event.stopPropagation();
 
@@ -186,14 +172,6 @@ export class AppComponent {
       parentFolder.isOpen = true;
     } else {
       this.fileSystem.push(newFolder);
-    }
-  }
-
-  createProject() {
-    const projectName = prompt('Nombre del nuevo proyecto:');
-    if(projectName) {
-      this.fileSystem = []; // Limpiar árbol para proyecto nuevo
-      // Lógica extra para iniciar proyecto
     }
   }
 
@@ -226,11 +204,9 @@ export class AppComponent {
     return Array(lineCount).fill(0).map((x, i) => i + 1);
   }
   exportTree() {
-    // Convierte el sistema de archivos a JSON para exportarlo
     const treeJson = JSON.stringify(this.fileSystem, null, 2);
     console.log("Árbol exportado:\n", treeJson);
     
-    // Opcional: Crear un archivo descargable automáticamente
     const blob = new Blob([treeJson], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -241,8 +217,7 @@ export class AppComponent {
   }
 
   togglePreview() {
-    // Aquí puedes implementar la lógica para abrir un panel derecho con la vista previa
-    // Por ahora, lanzamos una alerta
+
     alert('Función de Vista Previa activada. (Requiere implementación del panel derecho)');
   }
 
@@ -255,13 +230,11 @@ export class AppComponent {
     console.log(`Iniciando análisis del archivo: ${this.activeFile.name}`);
     console.log('Contenido a analizar:\n', this.activeFile.content);
     
-    // Aquí conectarías con tu backend o parser (Jison, Cup, etc.)
     alert('Análisis y traducción en progreso. Revisa la consola.');
   }
 
   openTerminal() {
     alert('Abriendo panel de terminal...');
-    // Más adelante aquí cambiaremos una variable booleana como this.showTerminal = !this.showTerminal;
   }
 }
 
