@@ -11,12 +11,11 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  // Esta es la función que TypeScript te está pidiendo
-  enviarCodigo(codigo: string, tipo: string): Observable<any> {
-    const payload = {
-      codigo: codigo,
-      tipo: tipo
-    };
-    return this.http.post(`${this.apiUrl}/analizar`, payload);
+  enviarCodigo(codigo: string, tipo: string) {
+    // Asegúrate de que apunte al localhost:3000 y a la ruta exacta
+    const url = 'http://localhost:3000/api/enviarCodigo'; 
+    const body = { codigo: codigo, formato: tipo };
+    
+    return this.http.post(url, body);
   }
 }

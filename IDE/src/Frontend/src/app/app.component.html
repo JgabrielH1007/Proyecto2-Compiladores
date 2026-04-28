@@ -127,5 +127,29 @@
       </table>
     </div>
   </div>
-
+  <div class="terminal-panel" *ngIf="mostrarTerminal">
+    <div class="panel-header terminal-header">
+      <h4>💻 Terminal de Base de Datos (DBASE)</h4>
+      <button class="close-btn" (click)="cerrarTerminal()">✖ Cerrar</button>
+    </div>
+    
+    <div class="terminal-content" #terminalScroll>
+      <div *ngFor="let linea of terminalHistory" 
+           [ngClass]="{'term-cmd': linea.type === 'command', 'term-out': linea.type === 'output', 'term-err': linea.type === 'error'}">
+        <span *ngIf="linea.type === 'command'" class="prompt-arrow">➜ </span>
+        <span *ngIf="linea.type === 'error'" class="prompt-arrow">✖ </span>
+        {{ linea.text }}
+      </div>
+      
+      <div class="terminal-input-line">
+        <span class="prompt-arrow">➜ </span>
+        <input type="text" 
+               #terminalInputBox
+               (keyup.enter)="ejecutarComandoTerminal($event)" 
+               placeholder="Escribe un comando y presiona Enter..."
+               autocomplete="off" 
+               spellcheck="false">
+      </div>
+    </div>
+  </div>
 </div>

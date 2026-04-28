@@ -44,6 +44,11 @@ export class AppComponent {
   cursorCol: number = 1;
   listaErrores: any[] = [];
   mostrarErrores: boolean = false;
+  @ViewChild('terminalScroll', { static: false }) terminalScrollRef!: ElementRef<HTMLDivElement>;
+  mostrarTerminal: boolean = false;
+  terminalHistory: { type: 'command' | 'output' | 'error', text: string }[] = [
+    { type: 'output', text: 'YFERA IDE Terminal iniciada. Listo para comandos DBASE.' }
+  ];
 
   // Constructor inyectando el servicio API
   constructor(private apiService: ApiService) {}
@@ -288,8 +293,50 @@ export class AppComponent {
   cerrarErrores() {
     this.mostrarErrores = false;
   }
-
   openTerminal() {
-    alert('Abriendo panel de terminal...');
+    this.mostrarTerminal = true;
+    setTimeout(() => this.scrollToBottomTerminal(), 50); 
+  }
+
+  cerrarTerminal() {
+    this.mostrarTerminal = false;
+  }
+
+  ejecutarComandoTerminal(event: any) {
+    const inputElement = event.target as HTMLInputElement;
+    const comando = inputElement.value.trim();
+    
+    if (!comando) return;
+
+    this.terminalHistory.push({ type: 'command', text: comando });
+    inputElement.value = ''; 
+    this.scrollToBottomTerminal();
+
+    this.apiService.enviarCodigo(comando, 'dbase').subscribe({
+      next: (respuesta: any) => {
+        if (respuesta.exito) {
+          const salida = respuesta.resultado ? 
+                         (typeof respuesta.resultado === 'object' ? JSON.stringify(respuesta.resultado, null, 2) : respuesta.resultado) 
+                         : 'Comando traducido/ejecutado exitosamente (Sin salida).';
+          
+          this.terminalHistory.push({ type: 'output', text: salida });
+        } else {
+          this.terminalHistory.push({ type: 'error', text: 'Error: Revisa la sintaxis de tu comando.' });
+        }
+        this.scrollToBottomTerminal();
+      },
+      error: (err: any) => {
+        this.terminalHistory.push({ type: 'error', text: 'Error de conexión con el servidor.' });
+        this.scrollToBottomTerminal();
+      }
+    });
+  }
+
+  scrollToBottomTerminal() {
+    try {
+      if (this.terminalScrollRef) {
+        this.terminalScrollRef.nativeElement.scrollTop = this.terminalScrollRef.nativeElement.scrollHeight;
+      }
+    } catch(err) { }
   }
 }
