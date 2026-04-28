@@ -323,3 +323,100 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #4f4f4f;
   }
+
+  /* --- ESTILOS DEL PANEL DE ERRORES --- */
+.errors-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 250px;
+  background-color: #1e1e1e; /* Color oscuro tipo VS Code */
+  border-top: 2px solid #007acc;
+  color: #cccccc;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #333;
+}
+
+.panel-header h4 {
+  margin: 0;
+  color: #ff6b6b; /* Rojo suave para indicar error */
+  font-size: 14px;
+}
+
+.panel-header .close-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.panel-header .close-btn:hover {
+  color: white;
+}
+
+.table-container {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.errors-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.errors-table th {
+  background-color: #252526;
+  padding: 8px 10px;
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid #444;
+}
+
+.errors-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #333;
+}
+
+.errors-table tr:hover {
+  background-color: #2a2d2e;
+}
+
+.code-font {
+  font-family: 'Courier New', Courier, monospace;
+  color: #ce9178; /* Color de string típico de IDEs */
+  background-color: rgba(255,255,255,0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.badge-lexico {
+  background-color: #5c1b1b;
+  color: #ff8c8c;
+}
+
+.badge-sintactico {
+  background-color: #4b4b1a;
+  color: #e2e268;
+}

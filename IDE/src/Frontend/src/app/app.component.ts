@@ -1,4 +1,5 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
+import { ApiService } from './api.service'; // Asegúrate de que esta ruta coincida con la ubicación de tu servicio
 import { CommonModule } from '@angular/common';
 
 export interface FileSystemNode {
@@ -41,6 +42,11 @@ export class AppComponent {
 
   cursorRow: number = 1;
   cursorCol: number = 1;
+  listaErrores: any[] = [];
+  mostrarErrores: boolean = false;
+
+  // Constructor inyectando el servicio API
+  constructor(private apiService: ApiService) {}
 
   onNodeClick(node: FileSystemNode) {
     if (node.type === 'folder') {
@@ -148,7 +154,9 @@ export class AppComponent {
     const fileName = prompt('Nombre del nuevo archivo:');
     if (!fileName) return;
 
-    const newFile: FileSystemNode = { name: fileName, type: 'file', content: '', format: 'txt' };
+    const extension = fileName.includes('.') ? fileName.split('.').pop() : 'principal';
+
+    const newFile: FileSystemNode = { name: fileName, type: 'file', content: '', format: extension };
 
     if (parentFolder && parentFolder.children) {
       parentFolder.children.push(newFile);
@@ -203,6 +211,7 @@ export class AppComponent {
     const lineCount = this.editorContent.split('\n').length;
     return Array(lineCount).fill(0).map((x, i) => i + 1);
   }
+
   exportTree() {
     const treeJson = JSON.stringify(this.fileSystem, null, 2);
     console.log("Árbol exportado:\n", treeJson);
@@ -217,7 +226,6 @@ export class AppComponent {
   }
 
   togglePreview() {
-
     alert('Función de Vista Previa activada. (Requiere implementación del panel derecho)');
   }
 
@@ -226,15 +234,62 @@ export class AppComponent {
       alert('No hay ningún archivo abierto para analizar.');
       return;
     }
+
+    const contenido = this.activeFile.content;
     
+    if (!contenido || contenido.trim() === '') {
+      alert('El archivo está vacío.');
+      return;
+    }
+
     console.log(`Iniciando análisis del archivo: ${this.activeFile.name}`);
-    console.log('Contenido a analizar:\n', this.activeFile.content);
     
-    alert('Análisis y traducción en progreso. Revisa la consola.');
+    let formato = 'y';
+    if (this.activeFile.name.includes('.')) {
+      formato = this.activeFile.name.split('.').pop() || 'y'; 
+    }
+    
+    this.listaErrores = [];
+    this.mostrarErrores = false;
+
+    this.apiService.enviarCodigo(contenido, formato).subscribe({
+        next: (respuesta: any) => {
+          console.log("Respuesta del servidor:", respuesta);
+          
+          if (respuesta.exito) {
+            alert("¡Análisis exitoso! No se encontraron errores.");
+            if(formato === 'db') {
+              //ejecutar codigo sql lite
+            }
+          } else {
+            this.listaErrores = respuesta.errores.map((err: any) => {
+              const tipoError = err.tipo ? err.tipo : (err.esperados ? 'Sintáctico' : 'Léxico');
+              const mensaje = err.mensaje ? err.mensaje : (err.esperados ? `Se esperaba: ${err.esperados.join(', ')}` : 'Caracter no reconocido por el lenguaje');
+
+              return {
+                tipo: tipoError,
+                linea: err.linea || err.fila || 0,
+                columna: err.columna || 0,
+                texto: err.texto || err.lexema || 'N/A',
+                mensaje: mensaje
+              };
+            });
+            
+            this.mostrarErrores = true;
+          }
+        },
+        error: (err: any) => {
+          console.error("Error de conexión con el backend:", err);
+          alert("No se pudo conectar con el servidor Node.js.");
+        }
+      });
+  }
+
+  cerrarErrores() {
+    this.mostrarErrores = false;
   }
 
   openTerminal() {
     alert('Abriendo panel de terminal...');
   }
 }
-

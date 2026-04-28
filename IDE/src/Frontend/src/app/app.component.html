@@ -91,4 +91,41 @@
       </div>
     </div>
 
-  </div> </div>
+  </div>
+  <div class="errors-panel" *ngIf="mostrarErrores">
+    <div class="panel-header">
+      <h4>🚨 Reporte de Errores Encontrados</h4>
+      <button class="close-btn" (click)="cerrarErrores()">✖ Cerrar</button>
+    </div>
+    
+    <div class="table-container">
+      <table class="errors-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tipo de Error</th>
+            <th>Línea</th>
+            <th>Columna</th>
+            <th>Texto / Lexema</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let error of listaErrores; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <span class="badge" [ngClass]="error.tipo === 'Sintáctico' ? 'badge-sintactico' : 'badge-lexico'">
+                {{ error.tipo }}
+              </span>
+            </td>
+            <td>{{ error.linea }}</td>
+            <td>{{ error.columna }}</td>
+            <td class="code-font">{{ error.texto }}</td>
+            <td>{{ error.mensaje }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

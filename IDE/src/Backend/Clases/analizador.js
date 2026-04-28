@@ -1,9 +1,9 @@
-const parserPrincipal = require('./modelo/lenguajePrincipal');
-const parserComp = require('./modelo/lenguajeComp');
-const parserStyle = require('./modelo/lenguajeStyle');
-const parserDbase = require('./modelo/lenguajeDbase');
-const ErrorLexico = require('./Errores/errorLexico');
-const ErrorSintactico = require('./Errores/errorSintactico');
+const parserPrincipal = require('../modelo/lenguajePrincipal');
+const parserComp = require('../modelo/lenguajeComp');
+const parserStyle = require('../modelo/lenguajeStyle');
+const parserDbase = require('../modelo/lenguajeDbase');
+const ErrorLexico = require('../Errores/errorLexico');
+const ErrorSintactico = require('../Errores/errorSintactico');
 
 class Analizador{
     analizar(codigo, tipo) {
@@ -13,7 +13,7 @@ class Analizador{
             errores: []
         };
 
-        const resultado = null;
+        let resultado = null;
 
         try{
             if(tipo === 'comp') {
