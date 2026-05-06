@@ -727,7 +727,7 @@ pushState:function pushState (condition) {
 stateStackSize:function stateStackSize() {
         return this.conditionStack.length;
     },
-options: {"case-sensitive":true},
+options: {"case-insensitive":true},
 performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
@@ -847,7 +847,7 @@ case 56: console.error('Error léxico en línea ' + yy_.yylloc.first_line + ': '
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:\/\*[\s\S]*?\*\/)/,/^(?:int\b)/,/^(?:string\b)/,/^(?:function\b)/,/^(?:T\b)/,/^(?:IMG\b)/,/^(?:FORM\b)/,/^(?:SUBMIT\b)/,/^(?:INPUT_TEXT\b)/,/^(?:INPUT_NUMBER\b)/,/^(?:INPUT_BOOL\b)/,/^(?:id\b)/,/^(?:label\b)/,/^(?:value\b)/,/^(?:true\b)/,/^(?:false\b)/,/^(?:for\b)/,/^(?:each\b)/,/^(?:track\b)/,/^(?:empty\b)/,/^(?:if\b)/,/^(?:else\b)/,/^(?:Switch\b)/,/^(?:case\b)/,/^(?:default\b)/,/^(?:\[\[)/,/^(?:\]\])/,/^(?:==)/,/^(?:!=)/,/^(?:<=)/,/^(?:>=)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:\[)/,/^(?:\])/,/^(?:<)/,/^(?:>)/,/^(?:\()/,/^(?:\))/,/^(?:\{)/,/^(?:\})/,/^(?:,)/,/^(?::)/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:!)/,/^(?:"([^\"\\]|\\.)*")/,/^(?:\$[a-zA-Z0-9_]+)/,/^(?:@[a-zA-Z0-9_]+)/,/^(?:[0-9]+(?:\.[0-9]+)?\b)/,/^(?:[a-zA-Z_][a-zA-Z0-9_-]*)/,/^(?:$)/,/^(?:.)/],
+rules: [/^(?:\s+)/i,/^(?:\/\*[\s\S]*?\*\/)/i,/^(?:int\b)/i,/^(?:string\b)/i,/^(?:function\b)/i,/^(?:T\b)/i,/^(?:IMG\b)/i,/^(?:FORM\b)/i,/^(?:SUBMIT\b)/i,/^(?:INPUT_TEXT\b)/i,/^(?:INPUT_NUMBER\b)/i,/^(?:INPUT_BOOL\b)/i,/^(?:id\b)/i,/^(?:label\b)/i,/^(?:value\b)/i,/^(?:true\b)/i,/^(?:false\b)/i,/^(?:for\b)/i,/^(?:each\b)/i,/^(?:track\b)/i,/^(?:empty\b)/i,/^(?:if\b)/i,/^(?:else\b)/i,/^(?:Switch\b)/i,/^(?:case\b)/i,/^(?:default\b)/i,/^(?:\[\[)/i,/^(?:\]\])/i,/^(?:==)/i,/^(?:!=)/i,/^(?:<=)/i,/^(?:>=)/i,/^(?:&&)/i,/^(?:\|\|)/i,/^(?:\[)/i,/^(?:\])/i,/^(?:<)/i,/^(?:>)/i,/^(?:\()/i,/^(?:\))/i,/^(?:\{)/i,/^(?:\})/i,/^(?:,)/i,/^(?::)/i,/^(?:\+)/i,/^(?:-)/i,/^(?:\*)/i,/^(?:\/)/i,/^(?:%)/i,/^(?:!)/i,/^(?:"([^\"\\]|\\.)*")/i,/^(?:\$[a-zA-Z0-9_]+)/i,/^(?:@[a-zA-Z0-9_]+)/i,/^(?:[0-9]+(?:\.[0-9]+)?\b)/i,/^(?:[a-zA-Z_][a-zA-Z0-9_-]*)/i,/^(?:$)/i,/^(?:.)/i],
 conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56],"inclusive":true}}
 });
 return lexer;

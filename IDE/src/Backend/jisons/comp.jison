@@ -6,8 +6,7 @@
 
 /* Analizador lexico*/
 %lex
-%options case-sensitive
-
+%options case-insensitive
 %%
 
 \s+                         /* ignorar espacios */

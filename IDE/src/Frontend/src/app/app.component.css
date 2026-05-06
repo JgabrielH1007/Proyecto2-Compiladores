@@ -283,6 +283,47 @@
     overflow: auto;
     box-sizing: border-box;
   }
+
+  .editor-container {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+  }
+  
+  /* Ambas capas deben ser clones perfectos */
+  .editor-highlight, .code-input.editor-textarea {
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    padding: 10px 15px; /* Mismo padding que code-input */
+    font-family: 'Consolas', 'Courier New', monospace; /* Misma fuente que code-input */
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre;
+    border: none;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  
+  .editor-highlight {
+    z-index: 1;
+    color: #ffffff; /* Color Blanco por defecto para Variables y Otros */
+    pointer-events: none; /* Los clics atraviesan al textarea */
+  }
+  
+  .code-input.editor-textarea {
+    z-index: 2;
+    color: transparent !important; /* Texto invisible */
+    background: transparent !important;
+    caret-color: #ffffff; /* Cursor visible en blanco */
+    outline: none;
+    resize: none;
+    overflow: auto; /* Permite scroll */
+  }
   
   .no-file-msg {
     flex: 1;

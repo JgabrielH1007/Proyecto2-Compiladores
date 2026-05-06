@@ -1,6 +1,8 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { ApiService } from './api.service'; // Asegúrate de que esta ruta coincida con la ubicación de tu servicio
 import { CommonModule } from '@angular/common';
+import JSZip from 'jszip';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export interface FileSystemNode {
   name: string;
@@ -19,6 +21,7 @@ export interface FileSystemNode {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'] 
 })
+
 export class AppComponent {
   @ViewChild('lineNumbers', { static: false }) lineNumbersRef!: ElementRef<HTMLDivElement>;
 
@@ -50,8 +53,9 @@ export class AppComponent {
     { type: 'output', text: 'YFERA IDE Terminal iniciada. Listo para comandos DBASE.' }
   ];
 
-  // Constructor inyectando el servicio API
-  constructor(private apiService: ApiService) {}
+  highlightedContent: SafeHtml = ''; // <-- NUEVA VARIABLE
+
+  constructor(private apiService: ApiService, private sanitizer: DomSanitizer) {}
 
   onNodeClick(node: FileSystemNode) {
     if (node.type === 'folder') {
@@ -142,6 +146,7 @@ export class AppComponent {
   selectTab(file: FileSystemNode) {
     this.activeFile = file;
     this.editorContent = file.content || '';
+    this.updateHighlighting(); // <-- Disparar coloreo al abrir pestaña
   }
 
   closeTab(file: FileSystemNode, event: Event) {
@@ -203,6 +208,8 @@ export class AppComponent {
     const lines = textUpToCursor.split('\n');
     this.cursorRow = lines.length;
     this.cursorCol = lines[lines.length - 1].length + 1;
+    
+    this.updateHighlighting(); // <-- Disparar coloreo al teclear
   }
 
   syncScroll(event: Event) {
@@ -210,6 +217,44 @@ export class AppComponent {
     if (this.lineNumbersRef) {
       this.lineNumbersRef.nativeElement.scrollTop = textarea.scrollTop;
     }
+    // NUEVO: Sincronizar scroll del código a color
+    const highlightLayer = document.querySelector('.editor-highlight') as HTMLElement;
+    if (highlightLayer) {
+      highlightLayer.scrollTop = textarea.scrollTop;
+      highlightLayer.scrollLeft = textarea.scrollLeft;
+    }
+  }
+  updateHighlighting() {
+    if (!this.editorContent) {
+      this.highlightedContent = '';
+      return;
+    }
+
+    // 1. Escapar HTML para no romper el DOM (< y > a &lt; y &gt;)
+    let safeCode = this.editorContent
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // 2. Expresión regular con grupos nombrados según la tabla
+    const regex = /(?<string>"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(?<keyword>\b(?:import|execute|load|function|main|int|float|string|boolean|char|if|else|switch|case|default|while|do|for|break|continue|TABLE|COLUMNS|IN|DELETE|T|IMG|FORM|SUBMIT|INPUT_TEXT|INPUT_NUMBER|INPUT_BOOL|each|track|empty|extends|from|through|to|base|background|color|border|bottom|top|right|left|padding|margin|radius|width|height|style|text|align|font|size)\b)|(?<literal>\b(?:\d+(?:\.\d+)?|true|false)\b)|(?<bracket>[\{\}\[\]\(\)])|(?<operator>&lt;=|&gt;=|&lt;|&gt;|&amp;&amp;|\|\||==|!=|\+\+|\+|\-|\*|\/|\%|\!|=|@)/gi;
+
+    // 3. Aplicar colores solicitados
+    let htmlCode = safeCode.replace(regex, (match, string, keyword, literal, bracket, operator) => {
+      if (string) return `<span style="color: #FFA500;">${match}</span>`;     // Naranja
+      if (keyword) return `<span style="color: #BA68C8;">${match}</span>`;    // Morado
+      if (literal) return `<span style="color: #4DD0E1;">${match}</span>`;    // Celeste
+      if (bracket) return `<span style="color: #42A5F5;">${match}</span>`;    // Azul
+      if (operator) return `<span style="color: #4CAF50;">${match}</span>`;   // Verde
+      return match; 
+    });
+
+    // 4. Prevenir salto gráfico de la última línea vacía
+    if (htmlCode.endsWith('\n')) {
+      htmlCode += ' ';
+    }
+
+    this.highlightedContent = this.sanitizer.bypassSecurityTrustHtml(htmlCode);
   }
 
   get lineNumbers(): number[] {
@@ -217,17 +262,50 @@ export class AppComponent {
     return Array(lineCount).fill(0).map((x, i) => i + 1);
   }
 
-  exportTree() {
-    const treeJson = JSON.stringify(this.fileSystem, null, 2);
-    console.log("Árbol exportado:\n", treeJson);
-    
-    const blob = new Blob([treeJson], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workspace-tree.json';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  async exportTree() { //Creo un comprimido .zip del proyecto abierto
+    if (!this.fileSystem || this.fileSystem.length === 0) {
+      alert('El árbol de trabajo está vacío.');
+      return;
+    }
+
+    console.log("Comprimiendo el proyecto...");
+    const zip = new JSZip();
+
+    const agregarAlZip = (nodos: FileSystemNode[], carpetaZip: JSZip) => {
+      for (const nodo of nodos) {
+        if (nodo.type === 'folder') {
+          const subCarpeta = carpetaZip.folder(nodo.name);
+          if (nodo.children && subCarpeta) {
+            agregarAlZip(nodo.children, subCarpeta);
+          }
+        } else if (nodo.type === 'file') {
+          carpetaZip.file(nodo.name, nodo.content || '');
+        }
+      }
+    };
+
+    // 2. Empezamos a llenar el ZIP desde la raíz de tu fileSystem
+    agregarAlZip(this.fileSystem, zip);
+
+    try {
+      // 3. Generamos el archivo .zip binario de forma asíncrona
+      const blob = await zip.generateAsync({ type: 'blob' });
+
+      // 4. Forzamos la descarga en el navegador
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Proyecto_YFERA.zip'; // Nombre del archivo comprimido
+      document.body.appendChild(a); // Necesario en algunos navegadores
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      console.log("¡Proyecto exportado exitosamente!");
+    } catch (error) {
+      console.error("Error al generar el archivo ZIP:", error);
+      alert("Hubo un error al comprimir el proyecto.");
+    }
   }
 
   togglePreview() {
@@ -263,9 +341,15 @@ export class AppComponent {
           
           if (respuesta.exito) {
             alert("¡Análisis exitoso! No se encontraron errores.");
-            if(formato === 'db') {
-              //ejecutar codigo sql lite
+            
+            if (formato === 'db' || formato === 'dbase') {
+              // La base de datos se ejecuta directamente, no crea archivo
+              console.log("Script de base de datos procesado.");
+            } else {
+              // LLAMADA AL CREADOR DE ARCHIVOS
+              this.generarArchivoTraducido(this.activeFile!.name, formato, respuesta.resultado);
             }
+
           } else {
             this.listaErrores = respuesta.errores.map((err: any) => {
               const tipoError = err.tipo ? err.tipo : (err.esperados ? 'Sintáctico' : 'Léxico');
@@ -279,7 +363,6 @@ export class AppComponent {
                 mensaje: mensaje
               };
             });
-            
             this.mostrarErrores = true;
           }
         },
@@ -338,5 +421,95 @@ export class AppComponent {
         this.terminalScrollRef.nativeElement.scrollTop = this.terminalScrollRef.nativeElement.scrollHeight;
       }
     } catch(err) { }
+  }
+  // ==========================================
+  // GENERACIÓN DE ARCHIVOS TRADUCIDOS
+  // ==========================================
+
+  async generarArchivoTraducido(nombreOriginal: string, formatoOriginal: string, contenidoTraducido: string) {
+    // 1. Mapear extensión
+    let nuevaExtension = '';
+    if (formatoOriginal === 'comp') nuevaExtension = 'html';
+    else if (formatoOriginal === 'style') nuevaExtension = 'css';
+    else if (formatoOriginal === 'y' || formatoOriginal === 'principal') nuevaExtension = 'js';
+    else return;
+
+    const nombreSinExtension = nombreOriginal.substring(0, nombreOriginal.lastIndexOf('.'));
+    const nuevoNombre = `${nombreSinExtension}.${nuevaExtension}`;
+
+    // 2. Buscar la carpeta padre donde está el archivo actual
+    const parentFolder = this.findParentFolder(this.fileSystem, this.activeFile!);
+    const targetList = parentFolder && parentFolder.children ? parentFolder.children : this.fileSystem;
+
+    // 3. Revisar si el archivo traducido ya existe en el explorador
+    let translatedFile = targetList.find(f => f.name === nuevoNombre && f.type === 'file');
+
+    if (translatedFile) {
+      // Si ya existe, solo actualizamos el contenido en memoria
+      translatedFile.content = contenidoTraducido;
+      
+      // Si el usuario lo tiene abierto en una pestaña, actualizamos el editor
+      if (this.activeFile === translatedFile) {
+        this.editorContent = contenidoTraducido;
+      }
+    } else {
+      // Si no existe, creamos el nodo y lo agregamos al árbol
+      translatedFile = {
+        name: nuevoNombre,
+        type: 'file',
+        content: contenidoTraducido,
+        format: nuevaExtension
+      };
+      targetList.push(translatedFile);
+    }
+
+    // 4. (Opcional pero increíble) ¡Guardar el archivo físicamente en la computadora!
+    await this.guardarArchivoFisico(parentFolder, translatedFile);
+
+    // 5. Abrir automáticamente el archivo traducido en una nueva pestaña
+    this.openFile(translatedFile);
+  }
+
+  // Busca recursivamente la carpeta que contiene el targetFile
+  findParentFolder(nodes: FileSystemNode[], targetFile: FileSystemNode): FileSystemNode | null {
+    for (const node of nodes) {
+      if (node.type === 'folder' && node.children) {
+        if (node.children.includes(targetFile)) {
+          return node;
+        }
+        const found = this.findParentFolder(node.children, targetFile);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Usa la API nativa para escribir el archivo directamente en la carpeta local
+  async guardarArchivoFisico(parentFolder: FileSystemNode | null, fileNode: FileSystemNode) {
+    try {
+      // Obtenemos el "Handle" (permiso de la carpeta)
+      let dirHandle = parentFolder ? parentFolder.handle : null;
+      
+      // Si no hay padre, intentamos usar la raíz del proyecto
+      if (!dirHandle && this.fileSystem.length > 0) {
+        dirHandle = this.fileSystem[0].handle; 
+      }
+
+      // Si tenemos permiso de escritura en esa carpeta
+      if (dirHandle && dirHandle.kind === 'directory') {
+        // Creamos o sobreescribimos el archivo físico
+        const fileHandle = await dirHandle.getFileHandle(fileNode.name, { create: true });
+        const writable = await fileHandle.createWritable();
+        
+        await writable.write(fileNode.content || '');
+        await writable.close();
+        
+        // Guardamos el nuevo handle en el nodo por si el usuario lo edita y guarda después
+        fileNode.handle = fileHandle; 
+        console.log(`¡Archivo físico ${fileNode.name} creado/actualizado con éxito!`);
+      }
+    } catch (err) {
+      console.warn('No se pudo guardar físicamente en disco (solo se guardó en el IDE virtual):', err);
+    }
   }
 }

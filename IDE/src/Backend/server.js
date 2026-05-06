@@ -7,6 +7,9 @@ const fs = require('fs');
 
 const Analizador = require('./Clases/analizador'); 
 const TraductorSQL = require('./Clases/TraductorSQL'); 
+const TraductorHTML = require('./Clases/TraductorHTML');
+const traductorCSS = require('./Clases/TraductorCSS');
+const TraductorJS = require('./Clases/TraductorJS');
 
 const app = express();
 app.use(cors());
@@ -98,9 +101,75 @@ app.post('/api/enviarCodigo', (req, res) => {
                     linea: 0, columna: 0 
                 }] 
             });
+        } 
+    } else if (formato === 'comp') {
+        try {
+            const codigoHTML = TraductorHTML.traducir(respuestaAnalisis.resultado);
+            
+            if (!codigoHTML) {
+                 return res.json({ exito: true, resultado: "Script vacío, sin componentes generados." });
+            }
+
+            res.json({ 
+                exito: true, 
+                resultado: `Componente traducido a HTML con éxito.\n\n<!-- CÓDIGO GENERADO -->\n\n${codigoHTML}` 
+            });
+
+        } catch (error) {
+            res.json({ 
+                exito: false, 
+                errores: [{ 
+                    tipo: "Error de Traducción HTML", 
+                    mensaje: error.message,
+                    linea: 0, columna: 0 
+                }] 
+            });
+        }
+    } else if (formato === 'style') {
+        try {
+            const codigoCSS = traductorCSS.traducir(respuestaAnalisis.resultado);
+            
+            if (!codigoCSS) {
+                 return res.json({ exito: true, resultado: "Hoja de estilos vacía." });
+            }
+
+            res.json({ 
+                exito: true, 
+                resultado: `Estilos compilados con éxito.\n\n/* CÓDIGO CSS GENERADO */\n\n${codigoCSS}` 
+            });
+
+        } catch (error) {
+            res.json({ 
+                exito: false, 
+                errores: [{ tipo: "Error de Compilación CSS", mensaje: error.message, linea: 0, columna: 0 }] 
+            });
+        }
+    } else if (formato === 'principal' || formato === 'y') {
+        
+        try {
+            // El analizador validó el código .y y construyó el AST
+            const codigoJS = TraductorJS.traducir(respuestaAnalisis.resultado);
+            
+            if (!codigoJS) {
+                 return res.json({ exito: true, resultado: "Script principal vacío." });
+            }
+
+            res.json({ 
+                exito: true, 
+                resultado: `Código principal compilado con éxito.\n\n/* CÓDIGO JS GENERADO */\n\n${codigoJS}` 
+            });
+
+        } catch (error) {
+            res.json({ 
+                exito: false, 
+                errores: [{ 
+                    tipo: "Error de Compilación JavaScript", 
+                    mensaje: error.message, 
+                    linea: 0, columna: 0 
+                }] 
+            });
         }
     } else {
-        // Si el formato es 'comp', 'style', o 'principal', solo devolvemos el éxito del análisis
         res.json(respuestaAnalisis);
     }
 });
