@@ -165,7 +165,7 @@ case 43:
  this.$ = { tipo: 'IF', cond: $$[$0-6], body: $$[$0-3], elseifs: $$[$0-1], sino: $$[$0] }; 
 break;
 case 44:
- $$[$0-8].push({ cond: $$[$0-4], body: $$[$0-2] }); this.$ = $$[$0-8]; 
+ $$[$0-8].push({cond: $$[$0-4], body: $$[$0-1]}); this.$ = $$[$0-8]; 
 break;
 case 46: case 82:
  this.$ = $$[$0-1]; 
@@ -742,7 +742,7 @@ pushState:function pushState (condition) {
 stateStackSize:function stateStackSize() {
         return this.conditionStack.length;
     },
-options: {"case-insensitive":true},
+options: {"case-sensitive":true},
 performAction: function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
 var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
@@ -866,7 +866,7 @@ case 58: console.error('Error léxico en línea ' + yy_.yylloc.first_line + ': '
 break;
 }
 },
-rules: [/^(?:\s+)/i,/^(?:\/\*[\s\S]*?\*\/)/i,/^(?:#.*)/i,/^(?:import\b)/i,/^(?:execute\b)/i,/^(?:load\b)/i,/^(?:function\b)/i,/^(?:main\b)/i,/^(?:int\b)/i,/^(?:float\b)/i,/^(?:string\b)/i,/^(?:boolean\b)/i,/^(?:char\b)/i,/^(?:True\b)/i,/^(?:False\b)/i,/^(?:if\b)/i,/^(?:else\b)/i,/^(?:switch\b)/i,/^(?:case\b)/i,/^(?:default\b)/i,/^(?:while\b)/i,/^(?:do\b)/i,/^(?:for\b)/i,/^(?:break\b)/i,/^(?:continue\b)/i,/^(?:==)/i,/^(?:!=)/i,/^(?:<=)/i,/^(?:>=)/i,/^(?:&&)/i,/^(?:\|\|)/i,/^(?:@)/i,/^(?:;)/i,/^(?:,)/i,/^(?::)/i,/^(?:\+\+)/i,/^(?:=)/i,/^(?:\{)/i,/^(?:\})/i,/^(?:\[)/i,/^(?:\])/i,/^(?:\()/i,/^(?:\))/i,/^(?:\+)/i,/^(?:-)/i,/^(?:\*)/i,/^(?:\/)/i,/^(?:%)/i,/^(?:!)/i,/^(?:<)/i,/^(?:>)/i,/^(?:"([^\"\\]|\\.)*")/i,/^(?:'([^\'\\]|\\.)')/i,/^(?:`([^\`\\]|\\.)*`)/i,/^(?:[0-9]+\.[0-9]+\b)/i,/^(?:[0-9]+\b)/i,/^(?:[a-zA-Z_][a-zA-Z0-9_]*)/i,/^(?:$)/i,/^(?:.)/i],
+rules: [/^(?:\s+)/,/^(?:\/\*[\s\S]*?\*\/)/,/^(?:#.*)/,/^(?:import\b)/,/^(?:execute\b)/,/^(?:load\b)/,/^(?:function\b)/,/^(?:main\b)/,/^(?:int\b)/,/^(?:float\b)/,/^(?:string\b)/,/^(?:boolean\b)/,/^(?:char\b)/,/^(?:True\b)/,/^(?:False\b)/,/^(?:if\b)/,/^(?:else\b)/,/^(?:switch\b)/,/^(?:case\b)/,/^(?:default\b)/,/^(?:while\b)/,/^(?:do\b)/,/^(?:for\b)/,/^(?:break\b)/,/^(?:continue\b)/,/^(?:==)/,/^(?:!=)/,/^(?:<=)/,/^(?:>=)/,/^(?:&&)/,/^(?:\|\|)/,/^(?:@)/,/^(?:;)/,/^(?:,)/,/^(?::)/,/^(?:\+\+)/,/^(?:=)/,/^(?:\{)/,/^(?:\})/,/^(?:\[)/,/^(?:\])/,/^(?:\()/,/^(?:\))/,/^(?:\+)/,/^(?:-)/,/^(?:\*)/,/^(?:\/)/,/^(?:%)/,/^(?:!)/,/^(?:<)/,/^(?:>)/,/^(?:"([^\"\\]|\\.)*")/,/^(?:'([^\'\\]|\\.)')/,/^(?:`([^\`\\]|\\.)*`)/,/^(?:[0-9]+\.[0-9]+\b)/,/^(?:[0-9]+\b)/,/^(?:[a-zA-Z_][a-zA-Z0-9_]*)/,/^(?:$)/,/^(?:.)/],
 conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58],"inclusive":true}}
 });
 return lexer;

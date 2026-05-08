@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { ApiService } from './api.service'; // Asegúrate de que esta ruta coincida con la ubicación de tu servicio
+import { ApiService } from './api.service'; 
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms'; 
 import JSZip from 'jszip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -17,27 +18,15 @@ export interface FileSystemNode {
 @Component({
   selector: 'app-root',
   standalone: true,           
-  imports: [CommonModule],    
+  imports: [CommonModule, FormsModule],  
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'] 
 })
 
 export class AppComponent {
-  @ViewChild('lineNumbers', { static: false }) lineNumbersRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('lineNumbersContainer', { static: false }) lineNumbersRef!: ElementRef<HTMLDivElement>;
 
-  fileSystem: FileSystemNode[] = [
-    {
-      name: 'src',
-      type: 'folder',
-      isOpen: true,
-      children: [
-        { name: 'parser.cup', type: 'file', content: '/* Código del parser */\nterminal ID, NUM;', format: 'cup' },
-        { name: 'lexer.flex', type: 'file', content: '/* Código del lexer */\n%%', format: 'flex' },
-        { name: 'main.ts', type: 'file', content: 'console.log("Iniciando compilador...");', format: 'ts' }
-      ]
-    },
-    { name: 'README.md', type: 'file', content: '# Proyecto IDE\nInicio del proyecto', format: 'md' }
-  ];
+  fileSystem: FileSystemNode[] = [];
 
   openTabs: FileSystemNode[] = [];
   activeFile: FileSystemNode | null = null;
@@ -85,7 +74,7 @@ export class AppComponent {
         handle: dirHandle
       };
 
-      await this.readDirectory(dirHandle, rootNode.children!);
+      await this.leerDireccion(dirHandle, rootNode.children!);
       
       this.fileSystem.push(rootNode);
       
@@ -96,7 +85,7 @@ export class AppComponent {
     }
   }
 
-  async readDirectory(dirHandle: any, childrenArray: FileSystemNode[]) {
+  async leerDireccion(dirHandle: any, childrenArray: FileSystemNode[]) {
     for await (const entry of dirHandle.values()) {
       if (entry.kind === 'file') {
         childrenArray.push({
@@ -114,7 +103,7 @@ export class AppComponent {
           handle: entry
         };
         childrenArray.push(newFolder);
-        await this.readDirectory(entry, newFolder.children!);
+        await this.leerDireccion(entry, newFolder.children!);
       }
     }
 
@@ -146,7 +135,7 @@ export class AppComponent {
   selectTab(file: FileSystemNode) {
     this.activeFile = file;
     this.editorContent = file.content || '';
-    this.updateHighlighting(); // <-- Disparar coloreo al abrir pestaña
+    this.actualizarColoreado(); 
   }
 
   closeTab(file: FileSystemNode, event: Event) {
@@ -197,21 +186,21 @@ export class AppComponent {
     console.log('Guardando proyecto...', this.fileSystem);
   }
 
-  updateCursor(event: any) {
-    const textarea = event.target as HTMLTextAreaElement;
-    this.editorContent = textarea.value; 
+  updateCursor(event?: any) {
     if (this.activeFile) {
        this.activeFile.content = this.editorContent;
     }
 
-    const textUpToCursor = textarea.value.substring(0, textarea.selectionStart);
-    const lines = textUpToCursor.split('\n');
-    this.cursorRow = lines.length;
-    this.cursorCol = lines[lines.length - 1].length + 1;
+    if (event && event.target) {
+      const textarea = event.target as HTMLTextAreaElement;
+      const textUpToCursor = textarea.value.substring(0, textarea.selectionStart);
+      const lines = textUpToCursor.split('\n');
+      this.cursorRow = lines.length;
+      this.cursorCol = lines[lines.length - 1].length + 1;
+    }
     
-    this.updateHighlighting(); // <-- Disparar coloreo al teclear
+    this.actualizarColoreado();
   }
-
   syncScroll(event: Event) {
     const textarea = event.target as HTMLTextAreaElement;
     if (this.lineNumbersRef) {
@@ -224,22 +213,18 @@ export class AppComponent {
       highlightLayer.scrollLeft = textarea.scrollLeft;
     }
   }
-  updateHighlighting() {
+  actualizarColoreado() {
     if (!this.editorContent) {
       this.highlightedContent = '';
       return;
     }
-
-    // 1. Escapar HTML para no romper el DOM (< y > a &lt; y &gt;)
     let safeCode = this.editorContent
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // 2. Expresión regular con grupos nombrados según la tabla
     const regex = /(?<string>"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(?<keyword>\b(?:import|execute|load|function|main|int|float|string|boolean|char|if|else|switch|case|default|while|do|for|break|continue|TABLE|COLUMNS|IN|DELETE|T|IMG|FORM|SUBMIT|INPUT_TEXT|INPUT_NUMBER|INPUT_BOOL|each|track|empty|extends|from|through|to|base|background|color|border|bottom|top|right|left|padding|margin|radius|width|height|style|text|align|font|size)\b)|(?<literal>\b(?:\d+(?:\.\d+)?|true|false)\b)|(?<bracket>[\{\}\[\]\(\)])|(?<operator>&lt;=|&gt;=|&lt;|&gt;|&amp;&amp;|\|\||==|!=|\+\+|\+|\-|\*|\/|\%|\!|=|@)/gi;
 
-    // 3. Aplicar colores solicitados
     let htmlCode = safeCode.replace(regex, (match, string, keyword, literal, bracket, operator) => {
       if (string) return `<span style="color: #FFA500;">${match}</span>`;     // Naranja
       if (keyword) return `<span style="color: #BA68C8;">${match}</span>`;    // Morado
@@ -249,7 +234,6 @@ export class AppComponent {
       return match; 
     });
 
-    // 4. Prevenir salto gráfico de la última línea vacía
     if (htmlCode.endsWith('\n')) {
       htmlCode += ' ';
     }
@@ -262,7 +246,7 @@ export class AppComponent {
     return Array(lineCount).fill(0).map((x, i) => i + 1);
   }
 
-  async exportTree() { //Creo un comprimido .zip del proyecto abierto
+  async exportarProyecto() { //Creo un comprimido .zip del proyecto abierto
     if (!this.fileSystem || this.fileSystem.length === 0) {
       alert('El árbol de trabajo está vacío.');
       return;
@@ -284,19 +268,16 @@ export class AppComponent {
       }
     };
 
-    // 2. Empezamos a llenar el ZIP desde la raíz de tu fileSystem
     agregarAlZip(this.fileSystem, zip);
 
     try {
-      // 3. Generamos el archivo .zip binario de forma asíncrona
       const blob = await zip.generateAsync({ type: 'blob' });
 
-      // 4. Forzamos la descarga en el navegador
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'Proyecto_YFERA.zip'; // Nombre del archivo comprimido
-      document.body.appendChild(a); // Necesario en algunos navegadores
+      a.download = 'Proyecto_YFERA.zip'; 
+      document.body.appendChild(a); 
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
@@ -312,7 +293,7 @@ export class AppComponent {
     alert('Función de Vista Previa activada. (Requiere implementación del panel derecho)');
   }
 
-  analyzeAndTranslate() {
+  analizarYTraducir() {
     if (!this.activeFile) {
       alert('No hay ningún archivo abierto para analizar.');
       return;
@@ -378,7 +359,7 @@ export class AppComponent {
   }
   openTerminal() {
     this.mostrarTerminal = true;
-    setTimeout(() => this.scrollToBottomTerminal(), 50); 
+    setTimeout(() => this.scrollTerminal(), 50); 
   }
 
   cerrarTerminal() {
@@ -393,7 +374,7 @@ export class AppComponent {
 
     this.terminalHistory.push({ type: 'command', text: comando });
     inputElement.value = ''; 
-    this.scrollToBottomTerminal();
+    this.scrollTerminal();
 
     this.apiService.enviarCodigo(comando, 'dbase').subscribe({
       next: (respuesta: any) => {
@@ -406,28 +387,24 @@ export class AppComponent {
         } else {
           this.terminalHistory.push({ type: 'error', text: 'Error: Revisa la sintaxis de tu comando.' });
         }
-        this.scrollToBottomTerminal();
+        this.scrollTerminal();
       },
       error: (err: any) => {
         this.terminalHistory.push({ type: 'error', text: 'Error de conexión con el servidor.' });
-        this.scrollToBottomTerminal();
+        this.scrollTerminal();
       }
     });
   }
 
-  scrollToBottomTerminal() {
+  scrollTerminal() {
     try {
       if (this.terminalScrollRef) {
         this.terminalScrollRef.nativeElement.scrollTop = this.terminalScrollRef.nativeElement.scrollHeight;
       }
     } catch(err) { }
   }
-  // ==========================================
-  // GENERACIÓN DE ARCHIVOS TRADUCIDOS
-  // ==========================================
 
   async generarArchivoTraducido(nombreOriginal: string, formatoOriginal: string, contenidoTraducido: string) {
-    // 1. Mapear extensión
     let nuevaExtension = '';
     if (formatoOriginal === 'comp') nuevaExtension = 'html';
     else if (formatoOriginal === 'style') nuevaExtension = 'css';
@@ -437,23 +414,18 @@ export class AppComponent {
     const nombreSinExtension = nombreOriginal.substring(0, nombreOriginal.lastIndexOf('.'));
     const nuevoNombre = `${nombreSinExtension}.${nuevaExtension}`;
 
-    // 2. Buscar la carpeta padre donde está el archivo actual
     const parentFolder = this.findParentFolder(this.fileSystem, this.activeFile!);
     const targetList = parentFolder && parentFolder.children ? parentFolder.children : this.fileSystem;
 
-    // 3. Revisar si el archivo traducido ya existe en el explorador
     let translatedFile = targetList.find(f => f.name === nuevoNombre && f.type === 'file');
 
     if (translatedFile) {
-      // Si ya existe, solo actualizamos el contenido en memoria
       translatedFile.content = contenidoTraducido;
       
-      // Si el usuario lo tiene abierto en una pestaña, actualizamos el editor
       if (this.activeFile === translatedFile) {
         this.editorContent = contenidoTraducido;
       }
     } else {
-      // Si no existe, creamos el nodo y lo agregamos al árbol
       translatedFile = {
         name: nuevoNombre,
         type: 'file',
@@ -463,14 +435,11 @@ export class AppComponent {
       targetList.push(translatedFile);
     }
 
-    // 4. (Opcional pero increíble) ¡Guardar el archivo físicamente en la computadora!
     await this.guardarArchivoFisico(parentFolder, translatedFile);
 
-    // 5. Abrir automáticamente el archivo traducido en una nueva pestaña
     this.openFile(translatedFile);
   }
 
-  // Busca recursivamente la carpeta que contiene el targetFile
   findParentFolder(nodes: FileSystemNode[], targetFile: FileSystemNode): FileSystemNode | null {
     for (const node of nodes) {
       if (node.type === 'folder' && node.children) {
@@ -484,27 +453,20 @@ export class AppComponent {
     return null;
   }
 
-  // Usa la API nativa para escribir el archivo directamente en la carpeta local
   async guardarArchivoFisico(parentFolder: FileSystemNode | null, fileNode: FileSystemNode) {
     try {
-      // Obtenemos el "Handle" (permiso de la carpeta)
       let dirHandle = parentFolder ? parentFolder.handle : null;
-      
-      // Si no hay padre, intentamos usar la raíz del proyecto
       if (!dirHandle && this.fileSystem.length > 0) {
         dirHandle = this.fileSystem[0].handle; 
       }
 
-      // Si tenemos permiso de escritura en esa carpeta
       if (dirHandle && dirHandle.kind === 'directory') {
-        // Creamos o sobreescribimos el archivo físico
         const fileHandle = await dirHandle.getFileHandle(fileNode.name, { create: true });
         const writable = await fileHandle.createWritable();
         
         await writable.write(fileNode.content || '');
         await writable.close();
         
-        // Guardamos el nuevo handle en el nodo por si el usuario lo edita y guarda después
         fileNode.handle = fileHandle; 
         console.log(`¡Archivo físico ${fileNode.name} creado/actualizado con éxito!`);
       }
@@ -512,4 +474,61 @@ export class AppComponent {
       console.warn('No se pudo guardar físicamente en disco (solo se guardó en el IDE virtual):', err);
     }
   }
+
+  indentadoAutomatico(event: KeyboardEvent) {
+    const textarea = event.target as HTMLTextAreaElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    // 1. MANEJO DE LA TECLA TAB
+    if (event.key === 'Tab') {
+      event.preventDefault(); // Evita que el navegador cambie de foco
+      const spaces = '    '; // 4 espacios
+
+      // Insertamos los espacios donde está el cursor
+      this.editorContent = this.editorContent.substring(0, start) + spaces + this.editorContent.substring(end);
+      if (this.activeFile) this.activeFile.content = this.editorContent;
+
+      // Movemos el cursor 4 posiciones adelante
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + spaces.length;
+        this.actualizarColoreado();
+        this.updateCursor({ target: textarea });
+      }, 0);
+    }
+
+    // 2. MANEJO DE LA TECLA ENTER (Auto-Indentado)
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Evita el salto de línea por defecto
+
+      // Obtenemos todo el texto antes del cursor
+      const textBeforeCursor = this.editorContent.substring(0, start);
+      const linesBefore = textBeforeCursor.split('\n');
+      const currentLine = linesBefore[linesBefore.length - 1]; // La línea donde estamos dando Enter
+
+      // Extraemos los espacios en blanco que hay al inicio de la línea actual
+      const leadingSpacesMatch = currentLine.match(/^\s*/);
+      let spacesToInsert = leadingSpacesMatch ? leadingSpacesMatch[0] : '';
+
+      // Si la línea actual termina en {, [, o (, agregamos un nivel extra de indentación
+      if (currentLine.trim().match(/[\{\[\(]$/)) {
+        spacesToInsert += '    ';
+      }
+
+      // Creamos el salto de línea + los espacios calculados
+      const insertString = '\n' + spacesToInsert;
+
+      // Insertamos esto en el texto
+      this.editorContent = this.editorContent.substring(0, start) + insertString + this.editorContent.substring(end);
+      if (this.activeFile) this.activeFile.content = this.editorContent;
+
+      // Movemos el cursor justo después de los espacios insertados
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + insertString.length;
+        this.actualizarColoreado();
+        this.updateCursor({ target: textarea });
+      }, 0);
+    }
+  }
+
 }

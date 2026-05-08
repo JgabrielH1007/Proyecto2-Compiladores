@@ -18,7 +18,7 @@
 "to"                                                    return 'TO';
 "extends"                                               return 'EXTENDS';
 
-"background color"                                      return 'BACKGROUND_COLOR'; 
+"background color"                                      return 'BACKGROUND_COLOR';
 "border bottom style"                                   return 'BORDER_BOTTOM_STYLE';
 "border bottom width"                                   return 'BORDER_BOTTOM_WIDTH';
 "border bottom color"                                   return 'BORDER_BOTTOM_COLOR';
@@ -61,12 +61,21 @@
 "width"                                                 return 'WIDTH';
 "color"                                                 return 'COLOR';
 
-CENTER|RIGHT|LEFT                                       return 'DIRECCION';
-HELVETICA|SANS\s+SERIF|SANS|MONO|CURSIVE                return 'FONT_FAMILY'; 
-DOTTED|LINE|DOUBLE|solid                                return 'BORDER_KIND';
-blue|white|red|green|violet|gray|black|lightgray        return 'COLOR_NAME';
+"CENTER"|"RIGHT"|"LEFT"                                 return 'DIRECCION';
+
+
+"SANS SERIF"                                            return 'FONT_FAMILY';
+"HELVETICA"                                             return 'FONT_FAMILY';
+"SANS"                                                  return 'FONT_FAMILY';
+"MONO"                                                  return 'FONT_FAMILY';
+"CURSIVE"                                               return 'FONT_FAMILY';
+
+
+"DOTTED"|"LINE"|"DOUBLE"|"SOLID"|"solid"                return 'BORDER_KIND';
+
+"blue"|"white"|"red"|"green"|"violet"|"gray"|"black"|"lightgray"  return 'COLOR_NAME';
 "rgb"                                                   return 'RGB_FUNC';
-"#"([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b                    return 'HEX_COLOR';
+"#"[a-fA-F0-9]{6}|"#"[a-fA-F0-9]{3}                    return 'HEX_COLOR';
 
 "{"                                                     return '{';
 "}"                                                     return '}';
@@ -79,17 +88,16 @@ blue|white|red|green|violet|gray|black|lightgray        return 'COLOR_NAME';
 "/"                                                     return '/';
 "+"                                                     return '+';
 "-"                                                     return '-';
+"%"                                                     return '%';
 
 [0-9]+"."[0-9]+"%"                                      return 'PORCENTAJE';
 [0-9]+"%"                                               return 'PORCENTAJE';
-[0-9]+"."[0-9]+\b                                       return 'NUMERO';
-[0-9]+\b                                                return 'NUMERO';
+[0-9]+"."[0-9]+                                         return 'NUMERO';
+[0-9]+                                                  return 'NUMERO';
 [a-zA-Z][a-zA-Z0-9-]*                                   return 'IDENTIFICADOR';
 \$[a-zA-Z0-9_]+                                         return 'VARIABLE_FOR';
-"$"                                                     return '$';
-"%"                                                     return '%';
 <<EOF>>                                                 return 'EOF';
-.                                                       { console.error('Error léxico en línea ' + yylloc.first_line + ': ' + yytext); }
+.                                                       { console.error('Error léxico en línea ' + yylloc.first_line + ': caracter no reconocido "' + yytext + '"'); }
 
 /lex
 
@@ -116,16 +124,16 @@ elemento
     ;
 
 definicion_estilo
-    : selector_clase '{' declaraciones '}' 
+    : selector_clase '{' declaraciones '}'
         { $$ = { tipo: 'ESTILO', selector: $1, extends: null, declaraciones: $3 }; }
     | selector_clase EXTENDS IDENTIFICADOR '{' declaraciones '}'
         { $$ = { tipo: 'ESTILO', selector: $1, extends: $3, declaraciones: $5 }; }
     ;
 
 selector_clase
-    : IDENTIFICADOR 
+    : IDENTIFICADOR
         { $$ = { id: $1, variable: null }; }
-    | IDENTIFICADOR VARIABLE_FOR 
+    | IDENTIFICADOR VARIABLE_FOR
         { $$ = { id: $1, variable: $2 }; }
     ;
 
@@ -134,28 +142,55 @@ declaraciones
     | /* vacío */               { $$ = []; }
     ;
 
+
 propiedad_medida
-    : HEIGHT | WIDTH | MIN_WIDTH | MAX_WIDTH | MIN_HEIGHT | MAX_HEIGHT 
-    | TEXT_SIZE | BORDER_RADIUS | BORDER_WIDTH
-    | PADDING | PADDING_LEFT | PADDING_RIGHT | PADDING_TOP | PADDING_BOTTOM
-    | MARGIN | MARGIN_LEFT | MARGIN_RIGHT | MARGIN_TOP | MARGIN_BOTTOM
-    | BORDER_TOP_WIDTH | BORDER_RIGHT_WIDTH | BORDER_BOTTOM_WIDTH | BORDER_LEFT_WIDTH
-    { $$ = $1; }
+    : HEIGHT         { $$ = $1; }
+    | WIDTH          { $$ = $1; }
+    | MIN_WIDTH      { $$ = $1; }
+    | MAX_WIDTH      { $$ = $1; }
+    | MIN_HEIGHT     { $$ = $1; }
+    | MAX_HEIGHT     { $$ = $1; }
+    | TEXT_SIZE      { $$ = $1; }
+    | BORDER_RADIUS  { $$ = $1; }
+    | BORDER_WIDTH   { $$ = $1; }
+    | PADDING        { $$ = $1; }
+    | PADDING_LEFT   { $$ = $1; }
+    | PADDING_RIGHT  { $$ = $1; }
+    | PADDING_TOP    { $$ = $1; }
+    | PADDING_BOTTOM { $$ = $1; }
+    | MARGIN         { $$ = $1; }
+    | MARGIN_LEFT    { $$ = $1; }
+    | MARGIN_RIGHT   { $$ = $1; }
+    | MARGIN_TOP     { $$ = $1; }
+    | MARGIN_BOTTOM  { $$ = $1; }
+    | BORDER_TOP_WIDTH    { $$ = $1; }
+    | BORDER_RIGHT_WIDTH  { $$ = $1; }
+    | BORDER_BOTTOM_WIDTH { $$ = $1; }
+    | BORDER_LEFT_WIDTH   { $$ = $1; }
     ;
 
 propiedad_estilo_borde
-    : BORDER_STYLE | BORDER_TOP_STYLE | BORDER_RIGHT_STYLE | BORDER_BOTTOM_STYLE | BORDER_LEFT_STYLE
-    { $$ = $1; }
+    : BORDER_STYLE        { $$ = $1; }
+    | BORDER_TOP_STYLE    { $$ = $1; }
+    | BORDER_RIGHT_STYLE  { $$ = $1; }
+    | BORDER_BOTTOM_STYLE { $$ = $1; }
+    | BORDER_LEFT_STYLE   { $$ = $1; }
     ;
 
 propiedad_color_borde
-    : BORDER_COLOR | BORDER_TOP_COLOR | BORDER_RIGHT_COLOR | BORDER_BOTTOM_COLOR | BORDER_LEFT_COLOR
-    { $$ = $1; }
+    : BORDER_COLOR        { $$ = $1; }
+    | BORDER_TOP_COLOR    { $$ = $1; }
+    | BORDER_RIGHT_COLOR  { $$ = $1; }
+    | BORDER_BOTTOM_COLOR { $$ = $1; }
+    | BORDER_LEFT_COLOR   { $$ = $1; }
     ;
 
 propiedad_borde_abreviado
-    : BORDER | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM | BORDER_LEFT
-    { $$ = $1; }
+    : BORDER        { $$ = $1; }
+    | BORDER_TOP    { $$ = $1; }
+    | BORDER_RIGHT  { $$ = $1; }
+    | BORDER_BOTTOM { $$ = $1; }
+    | BORDER_LEFT   { $$ = $1; }
     ;
 
 declaracion
@@ -188,16 +223,17 @@ valor_color
     | RGB_FUNC '(' NUMERO ',' NUMERO ',' NUMERO ')' { $$ = 'rgb(' + $3 + ',' + $5 + ',' + $7 + ')'; }
     ;
 
+
 expresion_numerica
-    : NUMERO                                     { $$ = Number($1); }
-    | VARIABLE_FOR                               { $$ = $1; }
-    | expresion_numerica '+' expresion_numerica  { $$ = {op: '+', izq: $1, der: $3}; }
-    | expresion_numerica '-' expresion_numerica  { $$ = {op: '-', izq: $1, der: $3}; }
-    | expresion_numerica '*' expresion_numerica  { $$ = {op: '*', izq: $1, der: $3}; }
-    | expresion_numerica '/' expresion_numerica  { $$ = {op: '/', izq: $1, der: $3}; }
-    | expresion_numerica '%' expresion_numerica  { $$ = {op: '%', izq: $1, der: $3}; }
-    | '(' expresion_numerica ')'                 { $$ = $2; }
-    | '-' expresion_numerica %prec UMINUS        { $$ = {op: 'UMINUS', der: $2}; }
+    : NUMERO                                    { $$ = Number($1); }
+    | VARIABLE_FOR                              { $$ = $1; }
+    | expresion_numerica '+' expresion_numerica { $$ = { op: '+', izq: $1, der: $3 }; }
+    | expresion_numerica '-' expresion_numerica { $$ = { op: '-', izq: $1, der: $3 }; }
+    | expresion_numerica '*' expresion_numerica { $$ = { op: '*', izq: $1, der: $3 }; }
+    | expresion_numerica '/' expresion_numerica { $$ = { op: '/', izq: $1, der: $3 }; }
+    | expresion_numerica '%' expresion_numerica { $$ = { op: '%', izq: $1, der: $3 }; }
+    | '(' expresion_numerica ')'                { $$ = $2; }
+    | '-' expresion_numerica %prec UMINUS       { $$ = { op: 'UMINUS', der: $2 }; }
     ;
 
 ciclo_for
@@ -210,7 +246,8 @@ tipo_rango
     | TO      { $$ = $1; }
     ;
 
+
 cuerpo_for
     : cuerpo_for definicion_estilo { $1.push($2); $$ = $1; }
-    | /* vacío */                  { $$ = []; }
+    | definicion_estilo            { $$ = [$1]; }
     ;

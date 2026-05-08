@@ -88,7 +88,6 @@ lista_consultas
     | consulta                 { $$ = [$1]; }
     ;
 
-/* El punto y coma ahora es opcional para mayor flexibilidad en scripts rápidos */
 consulta
     : instruccion ';' { $$ = $1; }
     | instruccion     { $$ = $1; }
@@ -101,7 +100,6 @@ instruccion
     | eliminar_registro
     ;
 
-/* CORRECCIÓN: Se restringió estrictamente a la sintaxis del manual usando COLUMNS */
 crear_tabla
     : TABLE IDENTIFICADOR COLUMNS lista_definicion_columnas
         { $$ = {tipo: 'CREATE', tabla: $2, cols: $4}; }
@@ -120,12 +118,10 @@ tipos_permitidos
     : TYPE_INT | TYPE_STRING | TYPE_CHAR | TYPE_BOOLEAN | TYPE_FLOAT
     ;
 
-/* Comando: table_name.column_name */
 seleccionar_columna
     : IDENTIFICADOR '.' IDENTIFICADOR { $$ = {tipo: 'SELECT_COL', tabla: $1, col: $3}; }
     ;
 
-/* Comandos de Inserción y Actualización */
 insertar_o_actualizar_registro
     : IDENTIFICADOR '[' lista_asignaciones ']'          
         { $$ = {tipo: 'INSERT', tabla: $1, data: $3}; }
@@ -142,12 +138,10 @@ asignacion
     : IDENTIFICADOR '=' expresion { $$ = {col: $1, val: $3}; }
     ;
 
-/* Comando de Eliminación */
 eliminar_registro
     : IDENTIFICADOR DELETE NUMERO { $$ = {tipo: 'DELETE', tabla: $1, id: $3}; }
     ;
 
-/* CORRECCIÓN: Se ajustó el retorno para construir el AST correctamente en vez de evaluar la suma */
 expresion
     : expresion '+' expresion { $$ = {op: '+', izq: $1, der: $3}; }
     | expresion '-' expresion { $$ = {op: '-', izq: $1, der: $3}; }

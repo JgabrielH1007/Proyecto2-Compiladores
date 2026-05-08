@@ -5,7 +5,7 @@
 
 /* Analizador léxico */
 %lex
-%options case-insensitive
+%options case-sensitive
 
 %%
 
@@ -72,7 +72,6 @@
 "<"                         return '<';
 ">"                         return '>';
 
-/* Expresiones Regulares para Valores */
 \"([^\"\\]|\\.)*\"          return 'CADENA';
 \'([^\'\\]|\\.)\'           return 'CARACTER';
 \`([^\`\\]|\\.)*\`          return 'QUERY_SQL';  
@@ -85,8 +84,7 @@
 
 /lex
 
-/* PRECEDENCIA ARITMÉTICA Y LÓGICA (CORREGIDA) */
-/* De menor precedencia (arriba) a mayor precedencia (abajo) */
+
 %left '||'
 %left '&&'
 %left '==' '!='
@@ -94,13 +92,12 @@
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' UMINUS
-%left '++' /* <-- SOLUCIÓN AL CONFLICTO: ++ tiene la máxima prioridad */
+%left '++' 
 
 %start inicio
 
 %%
 
-/* REGLAS SINTÁCTICAS CON GENERACIÓN DE AST */
 
 inicio
     : programa EOF { return $1; }
@@ -111,13 +108,11 @@ programa
         { $$ = { tipo: 'PROGRAMA', imports: $1, globales: $2, funciones: $3, main: $6 }; }
     ;
 
-/* --- IMPORTS --- */
 lista_imports
     : lista_imports IMPORT CADENA ';' { $1.push({ tipo: 'IMPORT', ruta: $3 }); $$ = $1; }
     | /* vacío */                     { $$ = []; }
     ;
 
-/* --- VARIABLES GLOBALES --- */
 lista_declaraciones
     : lista_declaraciones declaracion { $1.push($2); $$ = $1; }
     | /* vacío */                     { $$ = []; }
@@ -140,7 +135,6 @@ tipo
     : TYPE_INT { $$ = 'int'; } | TYPE_FLOAT { $$ = 'float'; } | TYPE_STRING { $$ = 'string'; } | TYPE_BOOLEAN { $$ = 'boolean'; } | TYPE_CHAR { $$ = 'char'; }
     ;
 
-/* --- FUNCIONES --- */
 lista_funciones
     : lista_funciones funcion { $1.push($2); $$ = $1; }
     | /* vacío */             { $$ = []; }
@@ -171,7 +165,6 @@ instruccion_funcion
     | LOAD expresion ';'    { $$ = { tipo: 'LOAD', ruta: $2 }; }
     ;
 
-/* --- BLOQUE MAIN Y LÓGICA --- */
 instrucciones_main
     : instrucciones_main instruccion_main { $1.push($2); $$ = $1; }
     | /* vacío */                         { $$ = []; }
@@ -202,15 +195,14 @@ asignacion
         { $$ = { tipo: 'ASIGNACION_ARR', id: $1, indice: $3, valor: $6 }; }
     ;
 
-/* --- ESTRUCTURAS DE CONTROL --- */
 logica_if
     : IF '(' expresion ')' '{' instrucciones_main '}' lista_elseif else_opt
         { $$ = { tipo: 'IF', cond: $3, body: $6, elseifs: $8, sino: $9 }; }
     ;
 
 lista_elseif
-    : lista_elseif ELSE IF '(' expresion ')' '{' instrucciones_main '}'
-        { $1.push({ cond: $5, body: $7 }); $$ = $1; }
+    : lista_elseif ELSE IF '(' expresion ')' '{' instrucciones_main '}' 
+        { $1.push({cond: $5, body: $8}); $$ = $1; }  
     | /* vacío */ { $$ = []; }
     ;
 
@@ -263,7 +255,6 @@ asignacion_for_step
     | /* vacío */                      { $$ = null; }
     ;
 
-/* --- EXPRESIONES --- */
 lista_expresiones_opt
     : lista_expresiones { $$ = $1; }
     | /* vacío */       { $$ = []; }

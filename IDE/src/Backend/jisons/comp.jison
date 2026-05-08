@@ -6,7 +6,7 @@
 
 /* Analizador lexico*/
 %lex
-%options case-insensitive
+%options case-sensitive
 %%
 
 \s+                         /* ignorar espacios */
@@ -15,6 +15,9 @@
 "int"                       return 'INT';
 "string"                    return 'STRING';
 "function"                  return 'FUNCTION';
+"float"                     return 'FLOAT';
+"boolean"                   return 'BOOLEAN';
+"char"                      return 'CHAR';
 "T"                         return 'T';
 "IMG"                       return 'IMG';
 "FORM"                      return 'FORM';
@@ -78,8 +81,7 @@
 
 %left '||'
 %left '&&'
-%left '==' '!='
-%left '<' '<=' '>' '>='
+%left '==' '!=' '<' '<=' '>' '>='  /* <-- Agregar aquí */
 %left '+' '-'
 %left '*' '/' '%'
 %right '!'
@@ -118,9 +120,19 @@ parametro
     | tipo VARIABLE      { $$ = {tipo: $1, id: $2}; }
     ;
 
-tipo : INT | STRING | FUNCTION ;
+tipo
+    : tipo_base '[' ']' { $$ = { tipo: $1, isArray: true }; }
+    | tipo_base         { $$ = { tipo: $1, isArray: false }; }
+    ;
 
-/* --- MANEJO DE ELEMENTOS --- */
+tipo_base
+    : INT       { $$ = 'int'; }
+    | FLOAT     { $$ = 'float'; }
+    | STRING    { $$ = 'string'; }
+    | BOOLEAN   { $$ = 'boolean'; }
+    | CHAR      { $$ = 'char'; }
+    | FUNCTION  { $$ = 'function'; }
+    ;
 
 elementos
     : elementos_no_vacio { $$ = $1; }
@@ -283,9 +295,7 @@ logica_if
 
 lista_elseif
     : lista_elseif ELSE IF '(' expresion ')' '{' elementos '}' 
-        { $1.push({cond: $5, body: $7}); $$ = $1; }
-    | lista_elseif ELSE '(' expresion ')' '{' elementos '}'     /* Soporta la sintaxis de tu manual */
-        { $1.push({cond: $4, body: $6}); $$ = $1; }
+        { $1.push({cond: $5, body: $8}); $$ = $1; }
     | /* vacío */ 
         { $$ = []; }
     ;
@@ -329,6 +339,10 @@ expresion
     | expresion '/' expresion { $$ = {op: '/', izq: $1, der: $3}; }
     | expresion '==' expresion { $$ = {op: '==', izq: $1, der: $3}; }
     | expresion '!=' expresion { $$ = {op: '!=', izq: $1, der: $3}; }
+    | expresion '<' expresion   { $$ = {op: '<', izq: $1, der: $3}; }
+    | expresion '<=' expresion   { $$ = {op: '<=', izq: $1, der: $3}; }
+    | expresion '>' expresion { $$ = {op: '>', izq: $1, der: $3}; }
+    | expresion '>=' expresion { $$ = {op: '>=', izq: $1, der: $3}; }
     | expresion '&&' expresion { $$ = {op: '&&', izq: $1, der: $3}; }
     | expresion '||' expresion { $$ = {op: '||', izq: $1, der: $3}; }
     | '!' expresion           { $$ = {op: '!', der: $2}; }

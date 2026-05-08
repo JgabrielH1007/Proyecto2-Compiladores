@@ -2,41 +2,31 @@ class TraductorJS {
     static traducir(ast) {
         if (!ast || ast.tipo !== 'PROGRAMA') return '';
 
-        let jsCode = `// ==========================================\n`;
-        jsCode += `// ARCHIVO PRINCIPAL GENERADO POR YFERA IDE\n`;
-        jsCode += `// ==========================================\n\n`;
+        let jsCode = `//Archivo traducido\n`;
+   
 
-        // 1. Imports
         if (ast.imports && ast.imports.length > 0) {
-            jsCode += `// --- IMPORTS ---\n`;
             ast.imports.forEach(imp => {
-                // Removemos las comillas para tener la ruta limpia
                 const ruta = imp.ruta.replace(/"/g, '');
                 jsCode += `await YferaAPI.importar('${ruta}');\n`;
             });
             jsCode += `\n`;
         }
 
-        // 2. Variables Globales
         if (ast.globales && ast.globales.length > 0) {
-            jsCode += `// --- VARIABLES GLOBALES ---\n`;
             ast.globales.forEach(glob => {
                 jsCode += this.procesarNodo(glob) + '\n';
             });
             jsCode += `\n`;
         }
 
-        // 3. Funciones
         if (ast.funciones && ast.funciones.length > 0) {
-            jsCode += `// --- FUNCIONES ---\n`;
             ast.funciones.forEach(func => {
                 jsCode += this.procesarNodo(func) + '\n\n';
             });
         }
 
-        // 4. Bloque Main
         if (ast.main) {
-            jsCode += `// --- PUNTO DE ENTRADA (MAIN) ---\n`;
             jsCode += `async function main() {\n`;
             ast.main.forEach(instruccion => {
                 const instJS = this.procesarNodo(instruccion);
@@ -44,12 +34,9 @@ class TraductorJS {
             });
             jsCode += `}\n\n`;
             
-            // Ejecución automática del main al final del script
             jsCode += `// Iniciar ejecución\nawait main();\n`;
         }
 
-        // Envolvemos todo en una función asíncrona autoejecutable (IIFE)
-        // Esto permite usar 'await' libremente dentro del script en cualquier navegador
         return `(async function() {\n  try {\n    ${jsCode.replace(/\n/g, '\n    ')}\n  } catch(error) {\n    console.error("Error en la ejecución:", error);\n    alert("Error de ejecución: " + error.message);\n  }\n})();`;
     }
 
@@ -69,7 +56,6 @@ class TraductorJS {
             
             // Funciones
             case 'FUNCION':
-                // Todas las funciones son async para soportar 'execute' y 'load'
                 const params = nodo.params.map(p => p.id).join(', ');
                 const body = nodo.body.map(b => this.procesarNodo(b)).join('\n  ');
                 return `async function ${nodo.id}(${params}) {\n  ${body}\n}`;
@@ -89,7 +75,7 @@ class TraductorJS {
             case 'ASIGNACION_ARR':
                 return `${nodo.id}[${this.evaluarExpresion(nodo.indice)}] = ${this.evaluarExpresion(nodo.valor)};`;
 
-            // Lógica de Control
+            // Lógica 
             case 'IF': return this.traducirIf(nodo);
             case 'SWITCH': return this.traducirSwitch(nodo);
             case 'WHILE':
@@ -108,8 +94,6 @@ class TraductorJS {
             default: return `/* Nodo no soportado: ${nodo.tipo} */`;
         }
     }
-
-    // --- MÉTODOS DE TRADUCCIÓN ESPECÍFICOS ---
 
     static traducirIf(nodo) {
         let js = `if (${this.evaluarExpresion(nodo.cond)}) {\n  ${nodo.body.map(b => this.procesarNodo(b)).join('\n  ')}\n}`;
@@ -154,9 +138,6 @@ class TraductorJS {
         return expr;
     }
 
-    /**
-     * Convierte las variables del lenguaje Y ($variable) en interpolación de JavaScript (${variable})
-     */
     static limpiarQuery(queryStr) {
         // Ejemplo: `SELECT * WHERE id = $id` -> `SELECT * WHERE id = ${id}`
         return queryStr.replace(/\$([a-zA-Z0-9_]+)/g, '${$1}');

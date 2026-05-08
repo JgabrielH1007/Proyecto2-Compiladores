@@ -2,9 +2,9 @@
   
   <div class="top-toolbar">
     <div class="toolbar-group">
-      <button (click)="exportTree()" title="Exportar estructura a JSON">📤 Exportar Árbol de Trabajo</button>
+      <button (click)="exportarProyecto()" title="Exportar estructura a JSON">📤 Exportar Árbol de Trabajo</button>
       <button (click)="togglePreview()" title="Mostrar/Ocultar vista previa">👁️ Vista Previa</button>
-      <button (click)="analyzeAndTranslate()" class="btn-primary" title="Ejecutar compilador">⚡ Analizar y Traducir Código</button>
+      <button (click)="analizarYTraducir()" class="btn-primary" title="Ejecutar compilador">⚡ Analizar y Traducir Código</button>
       <button (click)="openTerminal()" title="Abrir terminal o consola">💻 Abrir Terminal</button>
     </div>
   </div>
@@ -71,19 +71,18 @@
               <div *ngFor="let line of lineNumbers">{{ line }}</div>
             </div>
             
-            <!-- NUEVO: Contenedor relativo para la superposición -->
             <div class="editor-container">
-              <!-- Capa Trasera: Código Coloreado -->
+              <!-- Capa Trasera -->
               <div class="editor-highlight" [innerHTML]="highlightedContent"></div>
               
-              <!-- Capa Frontal: Textarea Transparente -->
+              <!-- Capa Frontal -->
               <textarea 
                 class="code-input editor-textarea" 
-                [value]="editorContent"
-                (input)="updateCursor($event)"
-                (keyup)="updateCursor($event)"
+                [(ngModel)]="editorContent"
+                (ngModelChange)="updateCursor($event)"
                 (click)="updateCursor($event)"
-                (scroll)="syncScroll($event)" 
+                (keyup)="updateCursor($event)"
+                (keydown)="indentadoAutomatico($event)"  (scroll)="syncScroll($event)" 
                 spellcheck="false"
                 wrap="off">
               </textarea>

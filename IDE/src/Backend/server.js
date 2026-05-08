@@ -112,7 +112,7 @@ app.post('/api/enviarCodigo', (req, res) => {
 
             res.json({ 
                 exito: true, 
-                resultado: `Componente traducido a HTML con éxito.\n\n<!-- CÓDIGO GENERADO -->\n\n${codigoHTML}` 
+                resultado: `<!-- CÓDIGO GENERADO -->\n\n${codigoHTML}` 
             });
 
         } catch (error) {
@@ -135,7 +135,7 @@ app.post('/api/enviarCodigo', (req, res) => {
 
             res.json({ 
                 exito: true, 
-                resultado: `Estilos compilados con éxito.\n\n/* CÓDIGO CSS GENERADO */\n\n${codigoCSS}` 
+                resultado: `/* CÓDIGO CSS GENERADO */\n\n${codigoCSS}` 
             });
 
         } catch (error) {
@@ -156,7 +156,7 @@ app.post('/api/enviarCodigo', (req, res) => {
 
             res.json({ 
                 exito: true, 
-                resultado: `Código principal compilado con éxito.\n\n/* CÓDIGO JS GENERADO */\n\n${codigoJS}` 
+                resultado: `/* CÓDIGO JS GENERADO */\n\n${codigoJS}` 
             });
 
         } catch (error) {
