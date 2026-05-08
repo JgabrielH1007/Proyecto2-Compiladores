@@ -38,11 +38,15 @@ export class AppComponent {
   mostrarErrores: boolean = false;
   @ViewChild('terminalScroll', { static: false }) terminalScrollRef!: ElementRef<HTMLDivElement>;
   mostrarTerminal: boolean = false;
+  @ViewChild('editorTextarea', { static: false }) editorTextarea!: ElementRef<HTMLTextAreaElement>;
+
+  selectedColor: string = '#007acc'; 
+  colorFormat: 'hex' | 'rgb' = 'hex'; 
   terminalHistory: { type: 'command' | 'output' | 'error', text: string }[] = [
     { type: 'output', text: 'YFERA IDE Terminal iniciada. Listo para comandos DBASE.' }
   ];
 
-  highlightedContent: SafeHtml = ''; // <-- NUEVA VARIABLE
+  highlightedContent: SafeHtml = '';
 
   constructor(private apiService: ApiService, private sanitizer: DomSanitizer) {}
 
@@ -206,7 +210,7 @@ export class AppComponent {
     if (this.lineNumbersRef) {
       this.lineNumbersRef.nativeElement.scrollTop = textarea.scrollTop;
     }
-    // NUEVO: Sincronizar scroll del código a color
+    //Se sincroniza scroll del código a color
     const highlightLayer = document.querySelector('.editor-highlight') as HTMLElement;
     if (highlightLayer) {
       highlightLayer.scrollTop = textarea.scrollTop;
@@ -287,10 +291,6 @@ export class AppComponent {
       console.error("Error al generar el archivo ZIP:", error);
       alert("Hubo un error al comprimir el proyecto.");
     }
-  }
-
-  togglePreview() {
-    alert('Función de Vista Previa activada. (Requiere implementación del panel derecho)');
   }
 
   analizarYTraducir() {
@@ -480,16 +480,13 @@ export class AppComponent {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
-    // 1. MANEJO DE LA TECLA TAB
     if (event.key === 'Tab') {
-      event.preventDefault(); // Evita que el navegador cambie de foco
-      const spaces = '    '; // 4 espacios
+      event.preventDefault(); 
+      const spaces = '    '; 
 
-      // Insertamos los espacios donde está el cursor
       this.editorContent = this.editorContent.substring(0, start) + spaces + this.editorContent.substring(end);
       if (this.activeFile) this.activeFile.content = this.editorContent;
 
-      // Movemos el cursor 4 posiciones adelante
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = start + spaces.length;
         this.actualizarColoreado();
@@ -497,38 +494,148 @@ export class AppComponent {
       }, 0);
     }
 
-    // 2. MANEJO DE LA TECLA ENTER (Auto-Indentado)
     if (event.key === 'Enter') {
-      event.preventDefault(); // Evita el salto de línea por defecto
+      event.preventDefault(); 
 
-      // Obtenemos todo el texto antes del cursor
       const textBeforeCursor = this.editorContent.substring(0, start);
       const linesBefore = textBeforeCursor.split('\n');
       const currentLine = linesBefore[linesBefore.length - 1]; // La línea donde estamos dando Enter
 
-      // Extraemos los espacios en blanco que hay al inicio de la línea actual
       const leadingSpacesMatch = currentLine.match(/^\s*/);
       let spacesToInsert = leadingSpacesMatch ? leadingSpacesMatch[0] : '';
 
-      // Si la línea actual termina en {, [, o (, agregamos un nivel extra de indentación
       if (currentLine.trim().match(/[\{\[\(]$/)) {
         spacesToInsert += '    ';
       }
 
-      // Creamos el salto de línea + los espacios calculados
       const insertString = '\n' + spacesToInsert;
 
-      // Insertamos esto en el texto
       this.editorContent = this.editorContent.substring(0, start) + insertString + this.editorContent.substring(end);
       if (this.activeFile) this.activeFile.content = this.editorContent;
 
-      // Movemos el cursor justo después de los espacios insertados
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = start + insertString.length;
         this.actualizarColoreado();
         this.updateCursor({ target: textarea });
       }, 0);
     }
+  }
+
+  hexToRgb(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  insertColor() {
+    if (!this.activeFile || !this.editorTextarea) {
+      alert('Abre un archivo para poder insertar un color.');
+      return;
+    }
+
+    const colorToInsert = this.colorFormat === 'hex' ? this.selectedColor.toUpperCase() : this.hexToRgb(this.selectedColor);
+    const textarea = this.editorTextarea.nativeElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    this.editorContent = this.editorContent.substring(0, start) + colorToInsert + this.editorContent.substring(end);
+    this.activeFile.content = this.editorContent;
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + colorToInsert.length;
+      this.actualizarColoreado();
+      this.updateCursor({ target: textarea });
+    }, 0);
+  }
+
+  eliminarNodo(node: FileSystemNode, parentFolder?: FileSystemNode, event?: Event) {
+    if (event) event.stopPropagation();
+
+    const confirmDelete = confirm(`¿Estás seguro de eliminar el ${node.type === 'file' ? 'archivo' : 'directorio'} "${node.name}"?`);
+    if (!confirmDelete) return;
+
+    if (node.type === 'file') {
+      this.closeTab(node, new Event('click')); // Reutilizamos tu función closeTab
+    } else if (node.type === 'folder' && node.children) {
+      this.cerrarRecursivo(node);
+    }
+
+    if (parentFolder && parentFolder.children) {
+      parentFolder.children = parentFolder.children.filter(n => n !== node);
+    } else {
+      this.fileSystem = this.fileSystem.filter(n => n !== node);
+    }
+  }
+
+  cerrarRecursivo(folder: FileSystemNode) {
+    if (!folder.children) return;
+    for (const child of folder.children) {
+      if (child.type === 'file') {
+        this.openTabs = this.openTabs.filter(f => f !== child);
+        if (this.activeFile === child) {
+          this.activeFile = this.openTabs.length > 0 ? this.openTabs[this.openTabs.length - 1] : null;
+          this.editorContent = this.activeFile ? (this.activeFile.content || '') : '';
+        }
+      } else {
+        this.cerrarRecursivo(child);
+      }
+    }
+  }
+  
+  renombrarNodo(node: FileSystemNode, event?: Event) {
+    if (event) event.stopPropagation();
+    
+    const newName = prompt(`Renombrar "${node.name}" a:`, node.name);
+    if (newName && newName.trim() !== '') {
+      node.name = newName.trim();
+      
+      if (node.type === 'file') {
+        node.format = node.name.split('.').pop() || 'txt';
+      }
+    }
+  }
+
+  moverNodo(node: FileSystemNode, currentParent?: FileSystemNode, event?: Event) {
+    if (event) event.stopPropagation();
+
+    const targetFolderName = prompt(`Mover "${node.name}" a la carpeta (deja en blanco para mover a la raíz):`);
+    if (targetFolderName === null) return; // El usuario canceló
+
+    let targetFolder: FileSystemNode | null = null;
+    if (targetFolderName.trim() !== '') {
+      targetFolder = this.encontrarPorNombre(this.fileSystem, targetFolderName.trim());
+      if (!targetFolder) {
+        alert(`Error: No se encontró ninguna carpeta llamada "${targetFolderName}".`);
+        return;
+      }
+    }
+
+    if (currentParent && currentParent.children) {
+      currentParent.children = currentParent.children.filter(n => n !== node);
+    } else {
+      this.fileSystem = this.fileSystem.filter(n => n !== node);
+    }
+
+    if (targetFolder) {
+      if (!targetFolder.children) targetFolder.children = [];
+      targetFolder.children.push(node);
+      targetFolder.isOpen = true; 
+    } else {
+      this.fileSystem.push(node); 
+    }
+  }
+
+  encontrarPorNombre(nodes: FileSystemNode[], folderName: string): FileSystemNode | null {
+    for (const node of nodes) {
+      if (node.type === 'folder' && node.name === folderName) return node;
+      if (node.type === 'folder' && node.children) {
+        const found = this.encontrarPorNombre(node.children, folderName);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
 }

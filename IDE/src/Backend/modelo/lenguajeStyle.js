@@ -632,162 +632,170 @@ case 1:/* comentarios multilínea */
 break;
 case 2:return 84;
 break;
-case 3:return 85;
+case 3:return 15;
 break;
-case 4:return 88;
+case 4:return 64;
 break;
-case 5:return 89;
+case 5:return 45;
 break;
-case 6:return 13;
+case 6:return 39;
 break;
-case 7:return 64;
+case 7:return 51;
 break;
-case 8:return 45;
+case 8:return 44;
 break;
-case 9:return 39;
+case 9:return 38;
 break;
-case 10:return 51;
+case 10:return 50;
 break;
-case 11:return 44;
+case 11:return 46;
 break;
-case 12:return 38;
+case 12:return 40;
 break;
-case 13:return 50;
+case 13:return 52;
 break;
-case 14:return 46;
+case 14:return 43;
 break;
-case 15:return 40;
+case 15:return 37;
 break;
-case 16:return 52;
+case 16:return 49;
 break;
-case 17:return 43;
+case 17:return 31;
 break;
-case 18:return 37;
+case 18:return 36;
 break;
-case 19:return 49;
+case 19:return 25;
 break;
-case 20:return 31;
+case 20:return 57;
 break;
-case 21:return 36;
+case 21:return 56;
 break;
-case 22:return 25;
+case 22:return 29;
 break;
-case 23:return 57;
+case 23:return 34;
 break;
-case 24:return 56;
+case 24:return 28;
 break;
-case 25:return 29;
+case 25:return 33;
 break;
-case 26:return 34;
+case 26:return 42;
 break;
-case 27:return 28;
+case 27:return 26;
 break;
-case 28:return 33;
+case 28:return 48;
 break;
-case 29:return 42;
+case 29:return 30;
 break;
-case 30:return 26;
+case 30:return 35;
 break;
-case 31:return 48;
+case 31:return 58;
 break;
-case 32:return 30;
+case 32:return 55;
 break;
-case 33:return 35;
+case 33:return 66;
 break;
-case 34:return 58;
+case 34:return 68;
 break;
-case 35:return 55;
+case 35:return 24;
 break;
-case 36:return 66;
+case 36:return 22;
 break;
-case 37:return 68;
+case 37:return 23;
 break;
-case 38:return 24;
+case 38:return 20;
 break;
-case 39:return 22;
+case 39:return 21;
 break;
-case 40:return 23;
+case 40:return 69;
 break;
-case 41:return 20;
+case 41:
+    var keywords = {
+
+        'from'      : 'FROM',
+        'through'   : 'THROUGH',
+        'to'        : 'TO',
+        'extends'   : 'EXTENDS',
+
+        'padding'   : 'PADDING',
+        'margin'    : 'MARGIN',
+        'border'    : 'BORDER',
+        'height'    : 'HEIGHT',
+        'width'     : 'WIDTH',
+        'color'     : 'COLOR',
+
+        'CENTER'    : 'DIRECCION',
+        'RIGHT'     : 'DIRECCION',
+        'LEFT'      : 'DIRECCION',
+
+        'HELVETICA' : 'FONT_FAMILY',
+        'SANS'      : 'FONT_FAMILY',
+        'MONO'      : 'FONT_FAMILY',
+        'CURSIVE'   : 'FONT_FAMILY',
+
+        'DOTTED'    : 'BORDER_KIND',
+        'LINE'      : 'BORDER_KIND',
+        'DOUBLE'    : 'BORDER_KIND',
+        'SOLID'     : 'BORDER_KIND',
+        'solid'     : 'BORDER_KIND',
+
+        'blue'      : 'COLOR_NAME',
+        'white'     : 'COLOR_NAME',
+        'red'       : 'COLOR_NAME',
+        'green'     : 'COLOR_NAME',
+        'violet'    : 'COLOR_NAME',
+        'gray'      : 'COLOR_NAME',
+        'black'     : 'COLOR_NAME',
+        'lightgray' : 'COLOR_NAME',
+
+        'rgb'       : 'RGB_FUNC'
+    };
+    return keywords[yy_.yytext] || 'IDENTIFICADOR';
+
 break;
-case 42:return 21;
+case 42:return 73;
 break;
-case 43:return 27;
+case 43:return 73;
 break;
-case 44:return 32;
+case 44:return 71;
 break;
-case 45:return 54;
+case 45:return 71;
 break;
-case 46:return 18;
+case 46:return 76;
 break;
-case 47:return 19;
+case 47:return 76;
 break;
-case 48:return 65;
+case 48:return 10;
 break;
-case 49:return 67;
+case 49:return 12;
 break;
-case 50:return 69;
+case 50:return 61;
 break;
-case 51:return 69;
+case 51:return 59;
 break;
-case 52:return 69;
+case 52:return 77;
 break;
-case 53:return 69;
+case 53:return 75;
 break;
-case 54:return 69;
+case 54:return 78;
 break;
-case 55:return 62;
+case 55:return 81;
 break;
-case 56:return 72;
+case 56:return 82;
 break;
-case 57:return 74;
+case 57:return 79;
 break;
-case 58:return 73;
+case 58:return 80;
 break;
-case 59:return 10;
+case 59:return 83;
 break;
-case 60:return 12;
+case 60:return 5;
 break;
-case 61:return 61;
-break;
-case 62:return 59;
-break;
-case 63:return 77;
-break;
-case 64:return 75;
-break;
-case 65:return 78;
-break;
-case 66:return 81;
-break;
-case 67:return 82;
-break;
-case 68:return 79;
-break;
-case 69:return 80;
-break;
-case 70:return 83;
-break;
-case 71:return 71;
-break;
-case 72:return 71;
-break;
-case 73:return 76;
-break;
-case 74:return 76;
-break;
-case 75:return 14;
-break;
-case 76:return 15;
-break;
-case 77:return 5;
-break;
-case 78: console.error('Error léxico en línea ' + yy_.yylloc.first_line + ': caracter no reconocido "' + yy_.yytext + '"'); 
+case 61: console.error('Error léxico en línea ' + yy_.yylloc.first_line + ': caracter no reconocido "' + yy_.yytext + '"'); 
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:\/\*[\s\S]*?\*\/)/,/^(?:@for\b)/,/^(?:from\b)/,/^(?:through\b)/,/^(?:to\b)/,/^(?:extends\b)/,/^(?:background color\b)/,/^(?:border bottom style\b)/,/^(?:border bottom width\b)/,/^(?:border bottom color\b)/,/^(?:border right style\b)/,/^(?:border right width\b)/,/^(?:border right color\b)/,/^(?:border left style\b)/,/^(?:border left width\b)/,/^(?:border left color\b)/,/^(?:border top style\b)/,/^(?:border top width\b)/,/^(?:border top color\b)/,/^(?:padding bottom\b)/,/^(?:margin bottom\b)/,/^(?:border radius\b)/,/^(?:border bottom\b)/,/^(?:border right\b)/,/^(?:padding right\b)/,/^(?:margin right\b)/,/^(?:padding left\b)/,/^(?:margin left\b)/,/^(?:border style\b)/,/^(?:border width\b)/,/^(?:border color\b)/,/^(?:padding top\b)/,/^(?:margin top\b)/,/^(?:border left\b)/,/^(?:border top\b)/,/^(?:text align\b)/,/^(?:text font\b)/,/^(?:text size\b)/,/^(?:min-height\b)/,/^(?:max-height\b)/,/^(?:min-width\b)/,/^(?:max-width\b)/,/^(?:padding\b)/,/^(?:margin\b)/,/^(?:border\b)/,/^(?:height\b)/,/^(?:width\b)/,/^(?:color\b)/,/^(?:CENTER|RIGHT|LEFT\b)/,/^(?:SANS SERIF\b)/,/^(?:HELVETICA\b)/,/^(?:SANS\b)/,/^(?:MONO\b)/,/^(?:CURSIVE\b)/,/^(?:DOTTED|LINE|DOUBLE|SOLID|solid\b)/,/^(?:blue|white|red|green|violet|gray|black|lightgray\b)/,/^(?:rgb\b)/,/^(?:#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3})/,/^(?:\{)/,/^(?:\})/,/^(?:;)/,/^(?:=)/,/^(?:,)/,/^(?:\()/,/^(?:\))/,/^(?:\*)/,/^(?:\/)/,/^(?:\+)/,/^(?:-)/,/^(?:%)/,/^(?:[0-9]+\.[0-9]+%)/,/^(?:[0-9]+%)/,/^(?:[0-9]+\.[0-9]+)/,/^(?:[0-9]+)/,/^(?:[a-zA-Z][a-zA-Z0-9-]*)/,/^(?:\$[a-zA-Z0-9_]+)/,/^(?:$)/,/^(?:.)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:\/\*[\s\S]*?\*\/)/,/^(?:@for\b)/,/^(?:\$[a-zA-Z0-9_]+)/,/^(?:background color\b)/,/^(?:border bottom style\b)/,/^(?:border bottom width\b)/,/^(?:border bottom color\b)/,/^(?:border right style\b)/,/^(?:border right width\b)/,/^(?:border right color\b)/,/^(?:border left style\b)/,/^(?:border left width\b)/,/^(?:border left color\b)/,/^(?:border top style\b)/,/^(?:border top width\b)/,/^(?:border top color\b)/,/^(?:padding bottom\b)/,/^(?:margin bottom\b)/,/^(?:border radius\b)/,/^(?:border bottom\b)/,/^(?:border right\b)/,/^(?:padding right\b)/,/^(?:margin right\b)/,/^(?:padding left\b)/,/^(?:margin left\b)/,/^(?:border style\b)/,/^(?:border width\b)/,/^(?:border color\b)/,/^(?:padding top\b)/,/^(?:margin top\b)/,/^(?:border left\b)/,/^(?:border top\b)/,/^(?:text align\b)/,/^(?:text font\b)/,/^(?:text size\b)/,/^(?:min-height\b)/,/^(?:max-height\b)/,/^(?:min-width\b)/,/^(?:max-width\b)/,/^(?:SANS SERIF\b)/,/^(?:[a-zA-Z][a-zA-Z0-9-]*)/,/^(?:#[a-fA-F0-9]{6})/,/^(?:#[a-fA-F0-9]{3})/,/^(?:[0-9]+\.[0-9]+%)/,/^(?:[0-9]+%)/,/^(?:[0-9]+\.[0-9]+)/,/^(?:[0-9]+)/,/^(?:\{)/,/^(?:\})/,/^(?:;)/,/^(?:=)/,/^(?:,)/,/^(?:\()/,/^(?:\))/,/^(?:\*)/,/^(?:\/)/,/^(?:\+)/,/^(?:-)/,/^(?:%)/,/^(?:$)/,/^(?:.)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61],"inclusive":true}}
 });
 return lexer;
 })();
