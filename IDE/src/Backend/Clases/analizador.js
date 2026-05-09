@@ -18,7 +18,7 @@ class Analizador{
         try{
             if(tipo === 'comp') {
                 resultado = parserComp.parse(codigo);
-            } else if(tipo === 'style') {
+            } else if(tipo === 'styles') {
                 resultado = parserStyle.parse(codigo);
             } else if(tipo === 'dbase') {
                 resultado = parserDbase.parse(codigo);

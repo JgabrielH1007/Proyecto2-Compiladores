@@ -125,7 +125,7 @@ app.post('/api/enviarCodigo', (req, res) => {
                 }] 
             });
         }
-    } else if (formato === 'style') {
+    } else if (formato === 'styles') {
         try {
             const codigoCSS = traductorCSS.traducir(respuestaAnalisis.resultado);
             
@@ -135,7 +135,7 @@ app.post('/api/enviarCodigo', (req, res) => {
 
             res.json({ 
                 exito: true, 
-                resultado: `/* CÓDIGO CSS GENERADO */\n\n${codigoCSS}` 
+                resultado: `${codigoCSS}` 
             });
 
         } catch (error) {

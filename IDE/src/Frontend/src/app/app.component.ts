@@ -417,7 +417,7 @@ export class AppComponent {
   async generarArchivoTraducido(nombreOriginal: string, formatoOriginal: string, contenidoTraducido: string) {
     let nuevaExtension = '';
     if (formatoOriginal === 'comp') nuevaExtension = 'html';
-    else if (formatoOriginal === 'style') nuevaExtension = 'css';
+    else if (formatoOriginal === 'styles') nuevaExtension = 'css';
     else if (formatoOriginal === 'y' || formatoOriginal === 'principal') nuevaExtension = 'js';
     else return;
 
