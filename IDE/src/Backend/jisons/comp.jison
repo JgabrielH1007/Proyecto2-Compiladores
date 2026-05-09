@@ -189,10 +189,65 @@ tabla
     ;
 
 lista_filas
-    : lista_filas fila { $1.push($2); $$ = $1; }
-    | fila             { $$ = [$1]; }
+    : lista_filas item_fila { $1.push($2); $$ = $1; }
+    | item_fila             { $$ = [$1]; }
+    ;
+item_fila
+    : fila
+    | logica_for_fila
+    | logica_if_fila
+    | logica_switch_fila
     ;
 
+logica_for_fila
+    : FOR EACH '(' VARIABLE ':' VARIABLE ')' '{' lista_filas '}'
+        { $$ = {tipo: 'FOR_EACH', iterador: $4, coleccion: $6, body: $9}; }
+    | FOR '(' lista_vars_for ')' TRACK VARIABLE '{' lista_filas '}' empty_opt_filas
+        { $$ = {tipo: 'FOR_TRACK', vars: $3, track: $6, body: $8, empty: $10}; }
+    ;
+
+empty_opt_filas
+    : EMPTY '{' lista_filas '}' { $$ = $3; }
+    | /* vacío */               { $$ = null; }
+    ;
+
+logica_if_fila
+    : IF '(' expresion ')' '{' lista_filas '}' lista_elseif_fila else_opt_filas
+        { $$ = {tipo: 'IF', cond: $3, body: $6, elseifs: $7, sino: $8}; }
+    ;
+
+lista_elseif_fila
+    : lista_elseif_fila ELSE IF '(' expresion ')' '{' lista_filas '}'
+        { $1.push({cond: $5, body: $8}); $$ = $1; }
+    | /* vacío */
+        { $$ = []; }
+    ;
+
+else_opt_filas
+    : ELSE '{' lista_filas '}' { $$ = $3; }
+    | /* vacío */              { $$ = null; }
+    ;
+
+logica_switch_fila
+    : SWITCH '(' expresion_switch ')' '{' lista_cases_fila default_opt_filas '}'
+        { $$ = {tipo: 'SWITCH', expr: $3, cases: $6, def: $7}; }
+    ;
+
+lista_cases_fila
+    : lista_cases_fila caso_fila { $1.push($2); $$ = $1; }
+    | caso_fila                  { $$ = [$1]; }
+    ;
+
+caso_fila
+    : CASE valor_case '{' lista_filas '}' ',' { $$ = {val: $2, body: $4}; }
+    | CASE valor_case '{' lista_filas '}'     { $$ = {val: $2, body: $4}; }
+    ;
+
+default_opt_filas
+    : DEFAULT '{' lista_filas '}' { $$ = $3; }
+    | /* vacío */                 { $$ = null; }
+    ;
+    
 fila
     : '[[' lista_columnas ']]' { $$ = $2; }
     ;

@@ -518,6 +518,7 @@
 /* Ocultar la apariencia fea por defecto del input de color */
 .color-picker-tool input[type="color"] {
   -webkit-appearance: none;
+  appearance: none;
   border: none;
   width: 26px;
   height: 26px;
@@ -550,3 +551,87 @@
 .color-picker-tool select:hover {
   border-color: #555;
 }
+
+/* --- ESTILOS DEL MODAL DE CONSTRUCCIÓN --- */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0, 0, 0, 0.65); /* Fondo oscuro semitransparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Nos aseguramos de que tape toda la app */
+  backdrop-filter: blur(3px); /* Efecto de desenfoque moderno */
+}
+
+.modal-window {
+  background: #1e1e1e; /* Color oscuro tipo Visual Studio Code */
+  color: #d4d4d4;
+  width: 450px;
+  border-radius: 8px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #444;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  background: #252526;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 { margin: 0; font-size: 16px; color: #fff; }
+
+.close-icon { 
+  background: none; border: none; color: #aaa; 
+  font-size: 16px; cursor: pointer; transition: 0.2s;
+}
+.close-icon:hover { color: #f44336; }
+
+.modal-body { padding: 25px 20px; }
+.modal-body p { margin-top: 0; font-size: 14px; color: #aaa; margin-bottom: 20px; }
+
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: bold; color: #ccc;}
+
+.form-group select {
+  width: 100%; padding: 10px;
+  background: #3c3c3c; color: #fff;
+  border: 1px solid #555; border-radius: 4px;
+  outline: none; font-family: inherit;
+}
+.form-group select:focus { border-color: #007acc; }
+
+.modal-footer {
+  padding: 15px 20px;
+  background: #252526;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-radius: 0 0 8px 8px;
+}
+
+.btn-cancel { 
+  background: #444; color: white; border: none; 
+  padding: 8px 16px; border-radius: 4px; cursor: pointer; transition: 0.2s;
+}
+.btn-cancel:hover { background: #555; }
+
+.btn-build { 
+  background: #28a745; color: white; border: none; 
+  padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;
+}
+.btn-build:hover { background: #218838; }

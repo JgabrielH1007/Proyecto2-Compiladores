@@ -14,6 +14,9 @@ class TraductorHTML {
         if (!nodo) return '';
  
         if (Array.isArray(nodo)) {
+            if (nodo.length > 0 && nodo[0] && nodo[0].tipo === 'CELDA') {
+                return this.traducirFila(nodo);
+            }
             return nodo.map(n => this.procesarNodo(n)).join('\n');
         }
  
@@ -33,7 +36,7 @@ class TraductorHTML {
             case 'FOR_TRACK':     return this.traducirFor(nodo);
             case 'SWITCH':        return this.traducirSwitch(nodo);
             case 'INVOKE':        return this.traducirInvocacion(nodo);
-            default: return `<!-- Nodo desconocido: ${nodo.tipo} -->`;
+            default: return ``;
         }
     }
  
@@ -52,16 +55,24 @@ class TraductorHTML {
         const clases = this.obtenerClases(nodo.estilos);
         let html = `<table${clases}>\n  <tbody>\n`;
  
-        nodo.filas.forEach(fila => {
-            html += `    <tr>\n`;
-            fila.forEach(columna => {
-                const celdaHtml = this.procesarNodo(columna.contenido);
-                html += `      <td>\n        ${this.indentar(celdaHtml, '        ')}\n      </td>\n`;
-            });
-            html += `    </tr>\n`;
+        nodo.filas.forEach(item => {
+            const itemHtml = this.procesarNodo(item);
+            if (itemHtml.trim() !== '') {
+                html += `    ${this.indentar(itemHtml, '    ')}\n`;
+            }
         });
  
         html += `  </tbody>\n</table>`;
+        return html;
+    }
+
+    static traducirFila(filaArr) {
+        let html = `<tr>\n`;
+        filaArr.forEach(columna => {
+            const celdaHtml = this.procesarNodo(columna.contenido);
+            html += `  <td>\n    ${this.indentar(celdaHtml, '    ')}\n  </td>\n`;
+        });
+        html += `</tr>`;
         return html;
     }
  

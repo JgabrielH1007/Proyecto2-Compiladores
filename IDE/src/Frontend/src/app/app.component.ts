@@ -31,6 +31,16 @@ export class AppComponent {
   openTabs: FileSystemNode[] = [];
   activeFile: FileSystemNode | null = null;
   editorContent: string = '';
+  mostrarModalConstruir: boolean = false;
+  
+  archivosHtmlDisponibles: FileSystemNode[] = [];
+  archivosCssDisponibles: FileSystemNode[] = [];
+  archivosJsDisponibles: FileSystemNode[] = [];
+
+  archivoHtmlSeleccionado: FileSystemNode | null = null;
+  archivoCssSeleccionado: FileSystemNode | null = null;
+  archivoJsSeleccionado: FileSystemNode | null = null;
+  
 
   cursorRow: number = 1;
   cursorCol: number = 1;
@@ -636,6 +646,98 @@ export class AppComponent {
       }
     }
     return null;
+  }
+  
+  abrirModalConstruir() {
+    this.archivosHtmlDisponibles = this.obtenerArchivosPorExtension('html');
+    this.archivosCssDisponibles = this.obtenerArchivosPorExtension('css');
+    this.archivosJsDisponibles = this.obtenerArchivosPorExtension('js');
+
+    if (this.archivosHtmlDisponibles.length === 0 || this.archivosCssDisponibles.length === 0 || this.archivosJsDisponibles.length === 0) {
+      alert("Asegúrate de tener al menos un archivo .html, .css y .js traducido en tu explorador.");
+      return;
+    }
+
+    this.mostrarModalConstruir = true;
+  }
+
+  cerrarModalConstruir() {
+    this.mostrarModalConstruir = false;
+  }
+
+  async ejecutarConstruccionFinal() {
+    if (!this.archivoHtmlSeleccionado || !this.archivoCssSeleccionado || !this.archivoJsSeleccionado) {
+      alert("Debes seleccionar un archivo de cada tipo (HTML, CSS, JS) para construir el proyecto.");
+      return;
+    }
+
+    const leerContenido = async (file: FileSystemNode) => {
+      if (file.content === undefined && file.handle) {
+        try {
+          const fileData = await file.handle.getFile();
+          file.content = await fileData.text();
+        } catch (error) {
+          console.error(`Error al leer físicamente el archivo ${file.name}:`, error);
+        }
+      }
+      return file.content || '';
+    };
+
+    const cssUnido = await leerContenido(this.archivoCssSeleccionado);
+    const htmlUnido = await leerContenido(this.archivoHtmlSeleccionado);
+    let jsUnido = await leerContenido(this.archivoJsSeleccionado);
+
+    const documentoFinal = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Proyecto Finalizado - YFERA IDE</title>
+    <style>
+${cssUnido}
+    </style>
+</head>
+<body>
+    <div id="yfera-root"></div>
+    
+    <div id="templates" style="display: none;">
+${htmlUnido}
+    </div>
+
+    <script>
+${jsUnido}
+    </script>
+</body>
+</html>`;
+
+    const nombreArchivoFinal = 'index_final.html';
+    let archivoFinal = this.fileSystem.find(f => f.name === nombreArchivoFinal && f.type === 'file');
+
+    if (archivoFinal) {
+      archivoFinal.content = documentoFinal;
+    } else {
+      archivoFinal = {
+        name: nombreArchivoFinal,
+        type: 'file',
+        content: documentoFinal,
+        format: 'html'
+      };
+      this.fileSystem.push(archivoFinal);
+    }
+
+    await this.guardarArchivoFisico(null, archivoFinal);
+    
+    this.cerrarModalConstruir();
+    alert(`¡Construcción exitosa! Se ha generado "${nombreArchivoFinal}".`);
+    this.openFile(archivoFinal);
+  }
+
+  obtenerArchivosPorExtension(ext: string, nodos: FileSystemNode[] = this.fileSystem): FileSystemNode[] {
+    let encontrados: FileSystemNode[] = [];
+    for (const nodo of nodos) {
+      if (nodo.type === 'file' && nodo.format === ext) encontrados.push(nodo);
+      else if (nodo.type === 'folder' && nodo.children) encontrados = encontrados.concat(this.obtenerArchivosPorExtension(ext, nodo.children));
+    }
+    return encontrados;
   }
 
 }

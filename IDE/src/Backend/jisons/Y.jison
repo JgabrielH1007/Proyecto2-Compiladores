@@ -3,87 +3,80 @@
     // Lógica adicional del lenguaje principal
 %}
 
-/* Analizador léxico */
 %lex
 %options case-sensitive
 
 %%
 
-/* Espacios y comentarios */
-\s+                         /* ignorar espacios */
-"/*"[\s\S]*?"*/"            /* ignorar comentarios multilínea */
-"#".*                       /* ignorar comentarios de una línea */
+\s+                             /* ignorar espacios */
+\/\*[\s\S]*?\*\/                /* ignorar comentarios multilínea */
+"#".*                           /* ignorar comentarios de línea */
 
-/* Palabras Reservadas */
-"import"                    return 'IMPORT';
-"execute"                   return 'EXECUTE';
-"load"                      return 'LOAD';
-"function"                  return 'FUNCTION';
-"main"                      return 'MAIN';
+"=="                            return '==';
+"!="                            return '!=';
+"<="                            return '<=';
+">="                            return '>=';
+"&&"                            return '&&';
+"||"                            return '||';
 
-/* Tipos de Datos */
-"int"                       return 'TYPE_INT';
-"float"                     return 'TYPE_FLOAT';
-"string"                    return 'TYPE_STRING';
-"boolean"                   return 'TYPE_BOOLEAN';
-"char"                      return 'TYPE_CHAR';
-"True"                      return 'TRUE';
-"False"                     return 'FALSE';
+[a-zA-Z_][a-zA-Z0-9_]* {
+    var keywords = {
+        'import'    : 'IMPORT',
+        'execute'   : 'EXECUTE',
+        'load'      : 'LOAD',
+        'function'  : 'FUNCTION',
+        'main'      : 'MAIN',
+        'int'       : 'TYPE_INT',
+        'float'     : 'TYPE_FLOAT',
+        'string'    : 'TYPE_STRING',
+        'boolean'   : 'TYPE_BOOLEAN',
+        'char'      : 'TYPE_CHAR',
+        'True'      : 'TRUE',
+        'False'     : 'FALSE',
+        'if'        : 'IF',
+        'else'      : 'ELSE',
+        'switch'    : 'SWITCH',
+        'case'      : 'CASE',
+        'default'   : 'DEFAULT',
+        'while'     : 'WHILE',
+        'do'        : 'DO',
+        'for'       : 'FOR',
+        'break'     : 'BREAK',
+        'continue'  : 'CONTINUE',
+    };
+    return keywords[yytext] || 'IDENTIFICADOR';
+}
 
-/* Estructuras de Control */
-"if"                        return 'IF';
-"else"                      return 'ELSE';
-"switch"                    return 'SWITCH';
-"case"                      return 'CASE';
-"default"                   return 'DEFAULT';
-"while"                     return 'WHILE';
-"do"                        return 'DO';
-"for"                       return 'FOR';
-"break"                     return 'BREAK';
-"continue"                  return 'CONTINUE';
+\"([^\"\\]|\\.)*\"              return 'CADENA';
+\'([^\'\\]|\\.)\'               return 'CARACTER';
+\`([^\`\\]|\\.)*\`              return 'QUERY_SQL';
+[0-9]+"."[0-9]+                 return 'NUM_FLOAT';
+[0-9]+                          return 'NUM_INT';
 
-/* Símbolos Relacionales y Lógicos */
-"=="                        return '==';
-"!="                        return '!=';
-"<="                        return '<=';
-">="                        return '>=';
-"&&"                        return '&&';
-"||"                        return '||';
+"@"                             return '@';
+";"                             return ';';
+","                             return ',';
+":"                             return ':';
+"="                             return '=';
+"{"                             return '{';
+"}"                             return '}';
+"["                             return '[';
+"]"                             return ']';
+"("                             return '(';
+")"                             return ')';
+"+"                             return '+';
+"-"                             return '-';
+"*"                             return '*';
+"/"                             return '/';
+"%"                             return '%';
+"!"                             return '!';
+"<"                             return '<';
+">"                             return '>';
 
-/* Símbolos Simples */
-"@"                         return '@';
-";"                         return ';';
-","                         return ',';
-":"                         return ':';
-"++"                        return '++'; 
-"="                         return '=';
-"{"                         return '{';
-"}"                         return '}';
-"["                         return '[';
-"]"                         return ']';
-"("                         return '(';
-")"                         return ')';
-"+"                         return '+';
-"-"                         return '-';
-"*"                         return '*';
-"/"                         return '/';
-"%"                         return '%';
-"!"                         return '!';
-"<"                         return '<';
-">"                         return '>';
-
-\"([^\"\\]|\\.)*\"          return 'CADENA';
-\'([^\'\\]|\\.)\'           return 'CARACTER';
-\`([^\`\\]|\\.)*\`          return 'QUERY_SQL';  
-[0-9]+"."[0-9]+\b           return 'NUM_FLOAT';
-[0-9]+\b                    return 'NUM_INT';
-[a-zA-Z_][a-zA-Z0-9_]*      return 'IDENTIFICADOR';
-
-<<EOF>>                     return 'EOF';
-.                           { console.error('Error léxico en línea ' + yylloc.first_line + ': ' + yytext); }
+<<EOF>>                         return 'EOF';
+.                               { console.error('Error léxico en línea ' + yylloc.first_line + ': caracter no reconocido "' + yytext + '"'); }
 
 /lex
-
 
 %left '||'
 %left '&&'
@@ -92,12 +85,10 @@
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' UMINUS
-%left '++' 
 
 %start inicio
 
 %%
-
 
 inicio
     : programa EOF { return $1; }
@@ -109,13 +100,15 @@ programa
     ;
 
 lista_imports
-    : lista_imports IMPORT CADENA ';' { $1.push({ tipo: 'IMPORT', ruta: $3 }); $$ = $1; }
-    | /* vacío */                     { $$ = []; }
+    : lista_imports IMPORT CADENA ';'
+        { $1.push({ tipo: 'IMPORT', ruta: $3 }); $$ = $1; }
+    | /* vacío */ { $$ = []; }
     ;
 
 lista_declaraciones
-    : lista_declaraciones declaracion { $1.push($2); $$ = $1; }
-    | /* vacío */                     { $$ = []; }
+    : lista_declaraciones declaracion
+        { $1.push($2); $$ = $1; }
+    | /* vacío */ { $$ = []; }
     ;
 
 declaracion
@@ -123,16 +116,22 @@ declaracion
         { $$ = { tipo: 'DECLARACION', tipoDato: $1, id: $2, valor: $4 }; }
     | tipo IDENTIFICADOR ';'
         { $$ = { tipo: 'DECLARACION', tipoDato: $1, id: $2, valor: null }; }
-    | tipo '[' ']' IDENTIFICADOR '=' '[' expresion ']' ';'
-        { $$ = { tipo: 'DECLARACION_ARR_VACIO', tipoDato: $1, id: $4, size: $7 }; }
+    | tipo '[' ']' IDENTIFICADOR '=' '[' NUM_INT ']' ';'
+        { $$ = { tipo: 'DECLARACION_ARR_VACIO', tipoDato: $1, id: $4, size: Number($7) }; }
     | tipo '[' ']' IDENTIFICADOR '=' '{' lista_expresiones '}' ';'
         { $$ = { tipo: 'DECLARACION_ARR', tipoDato: $1, id: $4, valores: $7 }; }
     | tipo '[' ']' IDENTIFICADOR '=' EXECUTE QUERY_SQL ';'
         { $$ = { tipo: 'DECLARACION_ARR_DB', tipoDato: $1, id: $4, query: $7 }; }
+    | tipo '[' ']' IDENTIFICADOR '=' EXECUTE QUERY_SQL
+        { $$ = { tipo: 'DECLARACION_ARR_DB', tipoDato: $1, id: $4, query: $7 }; }
     ;
 
 tipo
-    : TYPE_INT { $$ = 'int'; } | TYPE_FLOAT { $$ = 'float'; } | TYPE_STRING { $$ = 'string'; } | TYPE_BOOLEAN { $$ = 'boolean'; } | TYPE_CHAR { $$ = 'char'; }
+    : TYPE_INT     { $$ = 'int'; }
+    | TYPE_FLOAT   { $$ = 'float'; }
+    | TYPE_STRING  { $$ = 'string'; }
+    | TYPE_BOOLEAN { $$ = 'boolean'; }
+    | TYPE_CHAR    { $$ = 'char'; }
     ;
 
 lista_funciones
@@ -151,36 +150,45 @@ parametros_opt
     ;
 
 lista_parametros
-    : lista_parametros ',' tipo IDENTIFICADOR { $1.push({ tipo: $3, id: $4 }); $$ = $1; }
-    | tipo IDENTIFICADOR                      { $$ = [{ tipo: $1, id: $2 }]; }
+    : lista_parametros ',' tipo IDENTIFICADOR { $1.push({ tipoDato: $3, id: $4 }); $$ = $1; }
+    | tipo IDENTIFICADOR                      { $$ = [{ tipoDato: $1, id: $2 }]; }
     ;
 
 instrucciones_funcion
-    : instrucciones_funcion instruccion_funcion { $1.push($2); $$ = $1; }
-    | /* vacío */                               { $$ = []; }
+    : instrucciones_funcion instruccion_funcion
+        { $1.push($2); $$ = $1; }
+    | /* vacío */ { $$ = []; }
     ;
 
 instruccion_funcion
-    : EXECUTE QUERY_SQL ';' { $$ = { tipo: 'EXECUTE', query: $2 }; }
-    | LOAD expresion ';'    { $$ = { tipo: 'LOAD', ruta: $2 }; }
+    : EXECUTE QUERY_SQL ';'  { $$ = { tipo: 'EXECUTE', query: $2 }; }
+    | LOAD CADENA ';'        { $$ = { tipo: 'LOAD', ruta: $2 }; }
+    | LOAD IDENTIFICADOR ';' { $$ = { tipo: 'LOAD', ruta: $2 }; }
     ;
 
 instrucciones_main
-    : instrucciones_main instruccion_main { $1.push($2); $$ = $1; }
-    | /* vacío */                         { $$ = []; }
+    : instrucciones_main instruccion_main
+        { $1.push($2); $$ = $1; }
+    | /* vacío */ { $$ = []; }
     ;
 
 instruccion_main
-    : declaracion              { $$ = $1; }
-    | invocacion_componente    { $$ = $1; }
-    | asignacion               { $$ = $1; }
-    | logica_if                { $$ = $1; }
-    | logica_switch            { $$ = $1; }
-    | logica_while             { $$ = $1; }
-    | logica_do_while          { $$ = $1; }
-    | logica_for               { $$ = $1; }
-    | BREAK ';'                { $$ = { tipo: 'BREAK' }; }
-    | CONTINUE ';'             { $$ = { tipo: 'CONTINUE' }; }
+    : declaracion           { $$ = $1; }
+    | invocacion_componente { $$ = $1; }
+    | asignacion            { $$ = $1; }
+    | llamada_funcion       { $$ = $1; }
+    | logica_if             { $$ = $1; }
+    | logica_switch         { $$ = $1; }
+    | logica_while          { $$ = $1; }
+    | logica_do_while       { $$ = $1; }
+    | logica_for            { $$ = $1; }
+    | BREAK ';'             { $$ = { tipo: 'BREAK' }; }
+    | CONTINUE ';'          { $$ = { tipo: 'CONTINUE' }; }
+    ;
+
+llamada_funcion
+    : IDENTIFICADOR '(' lista_expresiones_opt ')' ';'
+        { $$ = { tipo: 'LLAMADA_FUNCION', id: $1, args: $3 }; }
     ;
 
 invocacion_componente
@@ -201,8 +209,8 @@ logica_if
     ;
 
 lista_elseif
-    : lista_elseif ELSE IF '(' expresion ')' '{' instrucciones_main '}' 
-        { $1.push({cond: $5, body: $8}); $$ = $1; }  
+    : lista_elseif ELSE IF '(' expresion ')' '{' instrucciones_main '}'
+        { $1.push({ cond: $5, body: $8 }); $$ = $1; }
     | /* vacío */ { $$ = []; }
     ;
 
@@ -250,9 +258,9 @@ asignacion_for
     ;
 
 asignacion_for_step
-    : IDENTIFICADOR '=' expresion      { $$ = { tipo: 'ASIGNACION', id: $1, valor: $3 }; }
-    | expresion                        { $$ = $1; }
-    | /* vacío */                      { $$ = null; }
+    : IDENTIFICADOR '=' expresion { $$ = { tipo: 'ASIGNACION', id: $1, valor: $3 }; }
+    | expresion                   { $$ = $1; }
+    | /* vacío */                 { $$ = null; }
     ;
 
 lista_expresiones_opt
@@ -266,29 +274,28 @@ lista_expresiones
     ;
 
 expresion
-    : expresion '+' expresion { $$ = { op: '+', izq: $1, der: $3 }; }
-    | expresion '-' expresion { $$ = { op: '-', izq: $1, der: $3 }; }
-    | expresion '*' expresion { $$ = { op: '*', izq: $1, der: $3 }; }
-    | expresion '/' expresion { $$ = { op: '/', izq: $1, der: $3 }; }
-    | expresion '%' expresion { $$ = { op: '%', izq: $1, der: $3 }; }
-    | expresion '==' expresion { $$ = { op: '==', izq: $1, der: $3 }; }
-    | expresion '!=' expresion { $$ = { op: '!=', izq: $1, der: $3 }; }
-    | expresion '<' expresion { $$ = { op: '<', izq: $1, der: $3 }; }
-    | expresion '<=' expresion { $$ = { op: '<=', izq: $1, der: $3 }; }
-    | expresion '>' expresion { $$ = { op: '>', izq: $1, der: $3 }; }
-    | expresion '>=' expresion { $$ = { op: '>=', izq: $1, der: $3 }; }
-    | expresion '&&' expresion { $$ = { op: '&&', izq: $1, der: $3 }; }
-    | expresion '||' expresion { $$ = { op: '||', izq: $1, der: $3 }; }
-    | '!' expresion           { $$ = { op: '!', der: $2 }; }
-    | '-' expresion %prec UMINUS { $$ = { op: 'UMINUS', der: $2 }; }
-    | expresion '++'          { $$ = { op: '++', izq: $1 }; }
-    | '(' expresion ')'       { $$ = $2; }
-    | IDENTIFICADOR           { $$ = { tipo: 'ID', val: $1 }; }
+    : expresion '+'  expresion    { $$ = { op: '+',  izq: $1, der: $3 }; }
+    | expresion '-'  expresion    { $$ = { op: '-',  izq: $1, der: $3 }; }
+    | expresion '*'  expresion    { $$ = { op: '*',  izq: $1, der: $3 }; }
+    | expresion '/'  expresion    { $$ = { op: '/',  izq: $1, der: $3 }; }
+    | expresion '%'  expresion    { $$ = { op: '%',  izq: $1, der: $3 }; }
+    | expresion '==' expresion    { $$ = { op: '==', izq: $1, der: $3 }; }
+    | expresion '!=' expresion    { $$ = { op: '!=', izq: $1, der: $3 }; }
+    | expresion '<'  expresion    { $$ = { op: '<',  izq: $1, der: $3 }; }
+    | expresion '<=' expresion    { $$ = { op: '<=', izq: $1, der: $3 }; }
+    | expresion '>'  expresion    { $$ = { op: '>',  izq: $1, der: $3 }; }
+    | expresion '>=' expresion    { $$ = { op: '>=', izq: $1, der: $3 }; }
+    | expresion '&&' expresion    { $$ = { op: '&&', izq: $1, der: $3 }; }
+    | expresion '||' expresion    { $$ = { op: '||', izq: $1, der: $3 }; }
+    | '!' expresion               { $$ = { op: '!',      der: $2 }; }
+    | '-' expresion %prec UMINUS  { $$ = { op: 'UMINUS', der: $2 }; }
+    | '(' expresion ')'           { $$ = $2; }
     | IDENTIFICADOR '[' expresion ']' { $$ = { tipo: 'ACCESO_ARR', id: $1, indice: $3 }; }
-    | NUM_INT                 { $$ = Number($1); }
-    | NUM_FLOAT               { $$ = Number($1); }
-    | CADENA                  { $$ = $1; }
-    | CARACTER                { $$ = $1; }
-    | TRUE                    { $$ = true; }
-    | FALSE                   { $$ = false; }
+    | IDENTIFICADOR               { $$ = { tipo: 'ID', val: $1 }; }
+    | NUM_INT                     { $$ = Number($1); }
+    | NUM_FLOAT                   { $$ = Number($1); }
+    | CADENA                      { $$ = $1; }
+    | CARACTER                    { $$ = $1; }
+    | TRUE                        { $$ = true; }
+    | FALSE                       { $$ = false; }
     ;
