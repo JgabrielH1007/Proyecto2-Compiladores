@@ -1,10 +1,10 @@
 /* Analizador lexico y sintactico de lenguaje de componentes */
 
 %{
-    // Aquí puedes incluir contadores de nodos o logs de depuración
+
 %}
 
-/* Analizador lexico*/
+
 %lex
 %options case-sensitive
 %%
@@ -12,36 +12,10 @@
 \s+                         /* ignorar espacios */
 \/\*[\s\S]*?\*\/            /* ignorar comentarios multilínea */
 
-"int"                       return 'INT';
-"string"                    return 'STRING';
-"function"                  return 'FUNCTION';
-"float"                     return 'FLOAT';
-"boolean"                   return 'BOOLEAN';
-"char"                      return 'CHAR';
-"T"                         return 'T';
-"IMG"                       return 'IMG';
-"FORM"                      return 'FORM';
-"SUBMIT"                    return 'SUBMIT';
+
 "INPUT_TEXT"                return 'INPUT_TEXT';
 "INPUT_NUMBER"              return 'INPUT_NUMBER';
 "INPUT_BOOL"                return 'INPUT_BOOL';
-
-"id"                        return 'PR_ID';
-"label"                     return 'PR_LABEL';
-"value"                     return 'PR_VALUE';
-"true"                      return 'TRUE';
-"false"                     return 'FALSE';
-
-"for"                       return 'FOR';
-"each"                      return 'EACH';
-"track"                     return 'TRACK';
-"empty"                     return 'EMPTY';
-"if"                        return 'IF';
-"else"                      return 'ELSE';
-"Switch"                    return 'SWITCH';
-"case"                      return 'CASE';
-"default"                   return 'DEFAULT';
-
 "[["                        return '[[';
 "]]"                        return ']]';
 "=="                        return '==';
@@ -50,6 +24,47 @@
 ">="                        return '>=';
 "&&"                        return '&&';
 "||"                        return '||';
+
+
+[a-zA-Z_][a-zA-Z0-9_-]* {
+    var keywords = {
+        /* Tipos */
+        'int'       : 'INT',
+        'string'    : 'STRING',
+        'function'  : 'FUNCTION',
+        'float'     : 'FLOAT',
+        'boolean'   : 'BOOLEAN',
+        'char'      : 'CHAR',
+        /* Elementos visuales de una sola palabra */
+        'T'         : 'T',
+        'IMG'       : 'IMG',
+        'FORM'      : 'FORM',
+        'SUBMIT'    : 'SUBMIT',
+        /* Propiedades de inputs */
+        'id'        : 'PR_ID',
+        'label'     : 'PR_LABEL',
+        'value'     : 'PR_VALUE',
+        'true'      : 'TRUE',
+        'false'     : 'FALSE',
+        /* Control de flujo */
+        'for'       : 'FOR',
+        'each'      : 'EACH',
+        'track'     : 'TRACK',
+        'empty'     : 'EMPTY',
+        'if'        : 'IF',
+        'else'      : 'ELSE',
+        'Switch'    : 'SWITCH',
+        'case'      : 'CASE',
+        'default'   : 'DEFAULT',
+    };
+    return keywords[yytext] || 'IDENTIFICADOR';
+}
+
+/* Literales y símbolos */
+\"([^\"\\]|\\.)*\"          return 'CADENA';
+"$"[a-zA-Z0-9_]+            return 'VARIABLE';
+"@"[a-zA-Z0-9_]+            return 'REF_ID';
+[0-9]+(?:\.[0-9]+)?         return 'NUMERO';
 
 "["                         return '[';
 "]"                         return ']';
@@ -68,12 +83,6 @@
 "%"                         return '%';
 "!"                         return '!';
 
-\"([^\"\\]|\\.)*\"          return 'CADENA';
-"$"[a-zA-Z0-9_]+            return 'VARIABLE';
-"@"[a-zA-Z0-9_]+            return 'REF_ID';
-[0-9]+(?:\.[0-9]+)?\b       return 'NUMERO';
-[a-zA-Z_][a-zA-Z0-9_-]* return 'IDENTIFICADOR';
-
 <<EOF>>                     return 'EOF';
 .                           { console.error('Error léxico en línea ' + yylloc.first_line + ': ' + yytext); }
 
@@ -81,7 +90,7 @@
 
 %left '||'
 %left '&&'
-%left '==' '!=' '<' '<=' '>' '>='  /* <-- Agregar aquí */
+%left '==' '!=' '<' '<=' '>' '>='
 %left '+' '-'
 %left '*' '/' '%'
 %right '!'
@@ -112,7 +121,7 @@ parametros_opt
 
 lista_parametros
     : lista_parametros ',' parametro { $1.push($3); $$ = $1; }
-    | parametro { $$ = [$1]; }
+    | parametro                      { $$ = [$1]; }
     ;
 
 parametro
@@ -121,17 +130,17 @@ parametro
     ;
 
 tipo
-    : tipo_base '[' ']' { $$ = { tipo: $1, isArray: true }; }
-    | tipo_base         { $$ = { tipo: $1, isArray: false }; }
+    : tipo_base '[' ']' { $$ = { base: $1, isArray: true }; }
+    | tipo_base         { $$ = { base: $1, isArray: false }; }
     ;
 
 tipo_base
-    : INT       { $$ = 'int'; }
-    | FLOAT     { $$ = 'float'; }
-    | STRING    { $$ = 'string'; }
-    | BOOLEAN   { $$ = 'boolean'; }
-    | CHAR      { $$ = 'char'; }
-    | FUNCTION  { $$ = 'function'; }
+    : INT      { $$ = 'int'; }
+    | FLOAT    { $$ = 'float'; }
+    | STRING   { $$ = 'string'; }
+    | BOOLEAN  { $$ = 'boolean'; }
+    | CHAR     { $$ = 'char'; }
+    | FUNCTION { $$ = 'function'; }
     ;
 
 elementos
@@ -144,6 +153,7 @@ elementos_no_vacio
     | elemento                    { $$ = [$1]; }
     ;
 
+
 elemento
     : seccion
     | tabla
@@ -154,6 +164,7 @@ elemento
     | logica_for
     | logica_if
     | logica_switch
+    | invocacion_componente
     ;
 
 estilos_opt
@@ -165,7 +176,7 @@ lista_ids
     | IDENTIFICADOR               { $$ = [$1]; }
     ;
 
-/* --- ESTRUCTURAS DE VISUALIZACIÓN --- */
+
 
 seccion
     : estilos_opt '[' elementos ']' { $$ = {tipo: 'SECTION', estilos: $1, contenido: $3}; }
@@ -173,8 +184,8 @@ seccion
     ;
 
 tabla
-    : estilos_opt '[[' lista_filas ']]'   { $$ = {tipo: 'TABLA', estilos: $1, filas: $3}; }
-    | '[[' lista_filas ']]'               { $$ = {tipo: 'TABLA', estilos: [], filas: $2}; }
+    : estilos_opt '[[' lista_filas ']]' { $$ = {tipo: 'TABLA', estilos: $1, filas: $3}; }
+    | '[[' lista_filas ']]'             { $$ = {tipo: 'TABLA', estilos: [], filas: $2}; }
     ;
 
 lista_filas
@@ -196,8 +207,8 @@ columna
     ;
 
 texto
-    : T estilos_opt '(' CADENA ')'  { $$ = {tipo: 'TEXTO', estilos: $2, val: $4}; }
-    | T '(' CADENA ')'              { $$ = {tipo: 'TEXTO', estilos: [], val: $3}; }
+    : T estilos_opt '(' CADENA ')' { $$ = {tipo: 'TEXTO', estilos: $2, val: $4}; }
+    | T '(' CADENA ')'             { $$ = {tipo: 'TEXTO', estilos: [], val: $3}; }
     ;
 
 imagen
@@ -220,17 +231,28 @@ formulario
     ;
 
 submit_opt
-    : SUBMIT estilos_opt '{' PR_LABEL ':' valor propiedades_submit_extra '}'
-        { $$ = {tipo: 'SUBMIT', estilos: $2, label: $6, extra: $7}; }
-    | SUBMIT '{' PR_LABEL ':' valor propiedades_submit_extra '}'
-        { $$ = {tipo: 'SUBMIT', estilos: [], label: $5, extra: $6}; }
+    : SUBMIT estilos_opt '{' props_submit '}'
+        { $$ = {tipo: 'SUBMIT', estilos: $2, props: $4}; }
+    | SUBMIT '{' props_submit '}'
+        { $$ = {tipo: 'SUBMIT', estilos: [], props: $3}; }
     | /* vacío */ { $$ = null; }
     ;
 
-propiedades_submit_extra
-    : /* vacío */ { $$ = []; }
-    | ',' FUNCTION ':' VARIABLE '(' lista_ref_id ')' { $$ = {func: $4, refs: $6}; }
-    | FUNCTION ':' VARIABLE '(' lista_ref_id ')'      { $$ = {func: $3, refs: $5}; }
+props_submit
+    : props_submit prop_submit { $1.push($2); $$ = $1; }
+    | prop_submit              { $$ = [$1]; }
+    ;
+
+prop_submit
+    : PR_LABEL ':' CADENA
+        { $$ = {tipo: 'LABEL', val: $3}; }
+    | FUNCTION ':' VARIABLE '(' lista_ref_id_opt ')'
+        { $$ = {tipo: 'FUNCTION', fn: $3, refs: $5}; }
+    ;
+
+lista_ref_id_opt
+    : lista_ref_id { $$ = $1; }
+    | /* vacío */  { $$ = []; }
     ;
 
 lista_ref_id
@@ -239,37 +261,65 @@ lista_ref_id
     ;
 
 input_form
-    : INPUT_TEXT estilos_opt '(' props_input ')'   { $$ = {tipo: 'INPUT_TEXT', estilos: $2, props: $4}; }
-    | INPUT_TEXT '(' props_input ')'               { $$ = {tipo: 'INPUT_TEXT', estilos: [], props: $3}; }
-    | INPUT_NUMBER estilos_opt '(' props_input ')' { $$ = {tipo: 'INPUT_NUMBER', estilos: $2, props: $4}; }
-    | INPUT_NUMBER '(' props_input ')'             { $$ = {tipo: 'INPUT_NUMBER', estilos: [], props: $3}; }
-    | INPUT_BOOL estilos_opt '(' props_input ')'   { $$ = {tipo: 'INPUT_BOOL', estilos: $2, props: $4}; }
-    | INPUT_BOOL '(' props_input ')'               { $$ = {tipo: 'INPUT_BOOL', estilos: [], props: $3}; }
+    : INPUT_TEXT estilos_opt '(' props_input ')'
+        { $$ = {tipo: 'INPUT_TEXT', estilos: $2, props: $4}; }
+    | INPUT_TEXT '(' props_input ')'
+        { $$ = {tipo: 'INPUT_TEXT', estilos: [], props: $3}; }
+    | INPUT_NUMBER estilos_opt '(' props_input ')'
+        { $$ = {tipo: 'INPUT_NUMBER', estilos: $2, props: $4}; }
+    | INPUT_NUMBER '(' props_input ')'
+        { $$ = {tipo: 'INPUT_NUMBER', estilos: [], props: $3}; }
+    | INPUT_BOOL estilos_opt '(' props_input ')'
+        { $$ = {tipo: 'INPUT_BOOL', estilos: $2, props: $4}; }
+    | INPUT_BOOL '(' props_input ')'
+        { $$ = {tipo: 'INPUT_BOOL', estilos: [], props: $3}; }
     ;
 
 props_input
-    : prop_input ',' prop_input ',' prop_input { $$ = [$1, $3, $5]; }
-    | prop_input ',' prop_input { $$ = [$1, $3]; }
-    | prop_input { $$ = [$1]; }
+    : props_input ',' prop_input { $1.push($3); $$ = $1; }
+    | prop_input                 { $$ = [$1]; }
     ;
 
 prop_input
-    : PR_ID ':' valor    { $$ = {id: $3}; }
-    | PR_LABEL ':' valor { $$ = {label: $3}; }
-    | PR_VALUE ':' valor { $$ = {value: $3}; }
+    : PR_ID ':' valor    { $$ = {tipo: 'id',    val: $3}; }
+    | PR_LABEL ':' valor { $$ = {tipo: 'label', val: $3}; }
+    | PR_VALUE ':' valor { $$ = {tipo: 'value', val: $3}; }
     ;
 
-/* CORRECCIÓN: Se agrega VARIABLE con acceso a arreglo para soportar $urls[1] */
-valor 
-    : CADENA 
-    | VARIABLE 
-    | VARIABLE '[' NUMERO ']' { $$ = {id: $1, index: $3}; }
-    | NUMERO 
-    | TRUE 
-    | FALSE 
+valor
+    : CADENA                     { $$ = {tipo: 'STR',         val: $1}; }
+    | VARIABLE '[' NUMERO ']'    { $$ = {tipo: 'ARR_NUM_IDX', id: $1, idx: $3}; }
+    | VARIABLE '[' VARIABLE ']'  { $$ = {tipo: 'ARR_VAR_IDX', id: $1, idx: $3}; }
+    | VARIABLE                   { $$ = {tipo: 'VAR',         val: $1}; }
+    | NUMERO                     { $$ = {tipo: 'NUM',         val: $1}; }
+    | TRUE                       { $$ = {tipo: 'BOOL',        val: true}; }
+    | FALSE                      { $$ = {tipo: 'BOOL',        val: false}; }
     ;
 
-/* --- LÓGICA --- */
+invocacion_componente
+    : IDENTIFICADOR '(' argumentos_opt ')'
+        { $$ = {tipo: 'INVOKE', id: $1, args: $3}; }
+    ;
+
+argumentos_opt
+    : lista_argumentos { $$ = $1; }
+    | /* vacío */      { $$ = []; }
+    ;
+
+lista_argumentos
+    : lista_argumentos ',' argumento { $1.push($3); $$ = $1; }
+    | argumento                      { $$ = [$1]; }
+    ;
+
+argumento
+    : VARIABLE '[' VARIABLE ']'  { $$ = {tipo: 'ARR_VAR_IDX', id: $1, idx: $3}; }
+    | VARIABLE '[' NUMERO ']'    { $$ = {tipo: 'ARR_NUM_IDX', id: $1, idx: $3}; }
+    | VARIABLE                   { $$ = {tipo: 'VAR',         val: $1}; }
+    | CADENA                     { $$ = {tipo: 'STR',         val: $1}; }
+    | NUMERO                     { $$ = {tipo: 'NUM',         val: $1}; }
+    | TRUE                       { $$ = {tipo: 'BOOL',        val: true}; }
+    | FALSE                      { $$ = {tipo: 'BOOL',        val: false}; }
+    ;
 
 logica_for
     : FOR EACH '(' VARIABLE ':' VARIABLE ')' '{' elementos '}'
@@ -279,13 +329,13 @@ logica_for
     ;
 
 lista_vars_for
-    : lista_vars_for ',' VARIABLE ':' VARIABLE { $1.push({id: $3, col: $5}); $$ = $1; }
-    | VARIABLE ':' VARIABLE { $$ = [{id: $1, col: $3}]; }
+    : lista_vars_for ',' VARIABLE ':' VARIABLE { $1.push({iter: $3, col: $5}); $$ = $1; }
+    | VARIABLE ':' VARIABLE                    { $$ = [{iter: $1, col: $3}]; }
     ;
 
 empty_opt
     : EMPTY '{' elementos '}' { $$ = $3; }
-    | /* vacío */            { $$ = null; }
+    | /* vacío */             { $$ = null; }
     ;
 
 logica_if
@@ -294,9 +344,9 @@ logica_if
     ;
 
 lista_elseif
-    : lista_elseif ELSE IF '(' expresion ')' '{' elementos '}' 
+    : lista_elseif ELSE IF '(' expresion ')' '{' elementos '}'
         { $1.push({cond: $5, body: $8}); $$ = $1; }
-    | /* vacío */ 
+    | /* vacío */
         { $$ = []; }
     ;
 
@@ -311,13 +361,13 @@ logica_switch
     ;
 
 expresion_switch
-    : VARIABLE { $$ = $1; }
-    | VARIABLE '[' NUMERO ']' { $$ = {id: $1, index: $3}; }
+    : VARIABLE '[' NUMERO ']' { $$ = {tipo: 'ARR_NUM_IDX', id: $1, idx: $3}; }
+    | VARIABLE                { $$ = $1; }
     ;
 
 lista_cases
     : lista_cases caso { $1.push($2); $$ = $1; }
-    | caso { $$ = [$1]; }
+    | caso             { $$ = [$1]; }
     ;
 
 caso
@@ -325,28 +375,31 @@ caso
     | CASE valor_case '{' elementos '}'     { $$ = {val: $2, body: $4}; }
     ;
 
-valor_case : CADENA | NUMERO ;
+valor_case
+    : CADENA { $$ = $1; }
+    | NUMERO { $$ = $1; }
+    ;
 
 default_opt
     : DEFAULT '{' elementos '}' { $$ = $3; }
-    | /* vacío */              { $$ = null; }
+    | /* vacío */               { $$ = null; }
     ;
 
 expresion
-    : expresion '+' expresion { $$ = {op: '+', izq: $1, der: $3}; }
-    | expresion '-' expresion { $$ = {op: '-', izq: $1, der: $3}; }
-    | expresion '*' expresion { $$ = {op: '*', izq: $1, der: $3}; }
-    | expresion '/' expresion { $$ = {op: '/', izq: $1, der: $3}; }
-    | expresion '==' expresion { $$ = {op: '==', izq: $1, der: $3}; }
-    | expresion '!=' expresion { $$ = {op: '!=', izq: $1, der: $3}; }
-    | expresion '<' expresion   { $$ = {op: '<', izq: $1, der: $3}; }
-    | expresion '<=' expresion   { $$ = {op: '<=', izq: $1, der: $3}; }
-    | expresion '>' expresion { $$ = {op: '>', izq: $1, der: $3}; }
-    | expresion '>=' expresion { $$ = {op: '>=', izq: $1, der: $3}; }
-    | expresion '&&' expresion { $$ = {op: '&&', izq: $1, der: $3}; }
-    | expresion '||' expresion { $$ = {op: '||', izq: $1, der: $3}; }
-    | '!' expresion           { $$ = {op: '!', der: $2}; }
-    | '-' expresion %prec UMINUS { $$ = {op: '-', der: $2}; } /* CORRECCIÓN: Agregado el Menos Unario */
-    | '(' expresion ')'       { $$ = $2; }
-    | valor                   { $$ = $1; }
+    : expresion '+'  expresion  { $$ = {op: '+',  izq: $1, der: $3}; }
+    | expresion '-'  expresion  { $$ = {op: '-',  izq: $1, der: $3}; }
+    | expresion '*'  expresion  { $$ = {op: '*',  izq: $1, der: $3}; }
+    | expresion '/'  expresion  { $$ = {op: '/',  izq: $1, der: $3}; }
+    | expresion '==' expresion  { $$ = {op: '==', izq: $1, der: $3}; }
+    | expresion '!=' expresion  { $$ = {op: '!=', izq: $1, der: $3}; }
+    | expresion '<'  expresion  { $$ = {op: '<',  izq: $1, der: $3}; }
+    | expresion '<=' expresion  { $$ = {op: '<=', izq: $1, der: $3}; }
+    | expresion '>'  expresion  { $$ = {op: '>',  izq: $1, der: $3}; }
+    | expresion '>=' expresion  { $$ = {op: '>=', izq: $1, der: $3}; }
+    | expresion '&&' expresion  { $$ = {op: '&&', izq: $1, der: $3}; }
+    | expresion '||' expresion  { $$ = {op: '||', izq: $1, der: $3}; }
+    | '!' expresion             { $$ = {op: '!',  der: $2}; }
+    | '-' expresion %prec UMINUS { $$ = {op: 'UMINUS', der: $2}; }
+    | '(' expresion ')'         { $$ = $2; }
+    | valor                     { $$ = $1; }
     ;
