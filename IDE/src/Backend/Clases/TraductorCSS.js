@@ -37,7 +37,6 @@ class TraductorCSS {
 
         let lineasCSS = [];
 
-        // Herencia: copiar propiedades de la clase base
         if (nodo.extends) {
             const claseBase = nodo.extends;
             if (this.clasesGeneradas[claseBase]) {
@@ -49,15 +48,12 @@ class TraductorCSS {
 
         if (nodo.declaraciones && nodo.declaraciones.length > 0) {
             for (const dec of nodo.declaraciones) {
-                // FIX #4: Mapear propiedades del lenguaje a propiedades CSS reales
                 const propCSS = this.mapearPropiedad(dec.propiedad);
 
                 if (dec.isShorthand) {
-                    // FIX #2: Agregar px al width del border abreviado
-                    const ancho    = this.evaluarExpresion(dec.valor, scope);
-                    // FIX #3: Convertir estilo de borde a minúsculas y mapear LINE
-                    const estilo   = this.mapearEstiloBorde(dec.estilo);
-                    const color    = this.formatearColor(dec.color);
+                    const ancho  = this.evaluarExpresion(dec.valor, scope);
+                    const estilo = this.mapearEstiloBorde(dec.estilo);
+                    const color  = this.formatearColor(dec.color);
                     lineasCSS.push(`  ${propCSS}: ${this.redondear(ancho)}px ${estilo} ${color};`);
                 } else {
                     const valorCSS = this.formatearValor(dec.valor, scope, dec.propiedad);
@@ -70,7 +66,6 @@ class TraductorCSS {
         return `.${nombreClase} {\n${lineasCSS.join('\n')}\n}\n\n`;
     }
 
-    // FIX #4: Tabla de mapeo completa de propiedades del lenguaje → CSS real
     mapearPropiedad(prop) {
         const mapa = {
             'text size'            : 'font-size',
@@ -109,11 +104,11 @@ class TraductorCSS {
             'max-width'            : 'max-width',
             'min-height'           : 'min-height',
             'max-height'           : 'max-height',
+            'height'               : 'min-height',
         };
         return mapa[prop] || prop.replace(/ /g, '-');
     }
 
-    // FIX #3: Convertir estilos de borde a minúsculas y mapear LINE → dashed
     mapearEstiloBorde(estilo) {
         const mapa = {
             'DOTTED' : 'dotted',
@@ -126,28 +121,22 @@ class TraductorCSS {
     }
 
     formatearValor(valor, scope, propiedad) {
-        // Propiedad solo de estilo de borde → mapear y devolver sin px
         if (this.esPropiedadSoloEstiloBorde(propiedad)) {
             return this.mapearEstiloBorde(valor);
         }
 
-        // FIX #4: text-align y text-font tienen tratamiento especial
         if (propiedad === 'text align') {
-            // FIX #5: Convertir dirección a minúsculas
             return String(valor).toLowerCase();
         }
 
         if (propiedad === 'text font') {
-            // FIX #4: Mapear nombres de fuente a familias CSS válidas
             return this.mapearFuente(valor);
         }
 
-        // Colores: devolver sin modificar
         if (this.esColor(valor)) {
             return this.formatearColor(valor);
         }
 
-        // Expresiones numéricas o variables → evaluar y agregar px
         if (typeof valor === 'object' || (typeof valor === 'string' && valor.startsWith('$'))) {
             const num = this.evaluarExpresion(valor, scope);
             if (this.esPropiedadDeMedida(propiedad)) {
@@ -156,7 +145,6 @@ class TraductorCSS {
             return this.redondear(num);
         }
 
-        // Número directo
         if (typeof valor === 'number') {
             if (this.esPropiedadDeMedida(propiedad)) {
                 return `${this.redondear(valor)}px`;
@@ -189,12 +177,12 @@ class TraductorCSS {
     esPropiedadDeMedida(prop) {
         const p = prop.toLowerCase();
         return (
-            p.includes('width')  ||
-            p.includes('height') ||
-            p.includes('padding') ||
-            p.includes('margin') ||
+            p.includes('width')    ||
+            p.includes('height')   ||
+            p.includes('padding')  ||
+            p.includes('margin')   ||
             p.includes('text size') ||
-            p.includes('size')   ||
+            p.includes('size')     ||
             p.includes('radius')
         );
     }

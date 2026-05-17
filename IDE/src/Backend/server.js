@@ -10,6 +10,8 @@ const TraductorSQL = require('./Clases/TraductorSQL');
 const TraductorHTML = require('./Clases/TraductorHTML');
 const traductorCSS = require('./Clases/TraductorCSS');
 const TraductorJS = require('./Clases/TraductorJS');
+const Conexion = require('./Clases/conexion');
+const parserPrincipal = require('./modelo/lenguajePrincipal');
 
 const app = express();
 app.use(cors());
@@ -34,9 +36,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
 const miAnalizador = new Analizador();
 
 app.post('/api/enviarCodigo', (req, res) => {
-    const { codigo, formato } = req.body; 
+    const { codigo, formato, archivos } = req.body; 
 
-    const respuestaAnalisis = miAnalizador.analizar(codigo, formato);
+    const respuestaAnalisis = miAnalizador.analizar(codigo, formato, archivos );
 
     if (!respuestaAnalisis.exito) {
         return res.json(respuestaAnalisis);
@@ -174,7 +176,32 @@ app.post('/api/enviarCodigo', (req, res) => {
     }
 });
 
-// Arrancar el servidor
+app.post('/api/ensamblar', (req, res) => {
+    const { css, htmlComponentes, jsTraducido, codigoY } = req.body;
+
+    try {
+        let astUsuario = null;
+        
+        if (codigoY && codigoY.trim() !== '') {
+            astUsuario = parserPrincipal.parse(codigoY);
+        }
+
+        const documentoFinal = Conexion.ensamblarHTML({
+            css: css,
+            htmlComponentes: htmlComponentes,
+            jsTraducido: jsTraducido
+        }, {
+
+            ast: astUsuario 
+        });
+
+        res.json({ exito: true, htmlFinal: documentoFinal });
+    } catch (error) {
+        console.error("Error al ensamblar:", error);
+        res.json({ exito: false, mensaje: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor Node corriendo en el puerto ${PORT}`);

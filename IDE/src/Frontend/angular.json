@@ -34,7 +34,8 @@
             ],
             "scripts": [
               "codemirror/lib/codemirror.js",
-              "codemirror/mode/javascript/javascript.js"
+              "codemirror/mode/javascript/javascript.js",
+              "src/app/assets/coloreado.js"
             ]
           },
           "configurations": {

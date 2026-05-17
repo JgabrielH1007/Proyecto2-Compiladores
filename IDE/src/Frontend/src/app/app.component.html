@@ -187,41 +187,39 @@
   <div class="modal-window">
     
     <div class="modal-header">
-      <h3>🚀 Ensamblar Proyecto</h3>
-      <button class="close-icon" (click)="cerrarModalConstruir()">✖</button>
+      <h3>Ensamblar Proyecto Final</h3>
+      <button class="close-icon" (click)="cerrarModalConstruir()" title="Cerrar ventana">✖</button>
     </div>
     
     <div class="modal-body">
-      <p>Selecciona los archivos compilados para generar tu proyecto final:</p>
+      <p>Selecciona los archivos compilados para generar tu <code>index_final.html</code>:</p>
 
       <div class="form-group">
-        <label>Archivo HTML (Vistas):</label>
-        <select [(ngModel)]="archivoHtmlSeleccionado">
-          <option [ngValue]="null" disabled>-- Selecciona tu archivo .html --</option>
-          <option *ngFor="let f of archivosHtmlDisponibles" [ngValue]="f">{{ f.name }}</option>
+        <label>Archivos HTML (Vistas) <small>(Usa Ctrl/Cmd para seleccionar varios)</small>:</label>
+        <select multiple [(ngModel)]="archivosHtmlSeleccionados">
+          <option *ngFor="let f of archivosHtmlDisponibles" [ngValue]="f">📄 {{ f.name }}</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>Archivo CSS (Estilos):</label>
-        <select [(ngModel)]="archivoCssSeleccionado">
-          <option [ngValue]="null" disabled>-- Selecciona tu archivo .css --</option>
-          <option *ngFor="let f of archivosCssDisponibles" [ngValue]="f">{{ f.name }}</option>
+        <label>Archivos CSS (Estilos) <small>(Usa Ctrl/Cmd para seleccionar varios)</small>:</label>
+        <select multiple [(ngModel)]="archivosCssSeleccionados">
+          <option *ngFor="let f of archivosCssDisponibles" [ngValue]="f">🎨 {{ f.name }}</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>Archivo JS (Lógica):</label>
+        <label>Archivo JS (Lógica Principal):</label>
         <select [(ngModel)]="archivoJsSeleccionado">
           <option [ngValue]="null" disabled>-- Selecciona tu archivo .js --</option>
-          <option *ngFor="let f of archivosJsDisponibles" [ngValue]="f">{{ f.name }}</option>
+          <option *ngFor="let f of archivosJsDisponibles" [ngValue]="f">⚡ {{ f.name }}</option>
         </select>
       </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn-cancel" (click)="cerrarModalConstruir()">Cancelar</button>
-      <button class="btn-build" (click)="ejecutarConstruccionFinal()">Construir Ahora</button>
+      <button class="btn-build" (click)="ejecutarConstruccionFinal()">🔨 Construir Proyecto</button>
     </div>
 
   </div>

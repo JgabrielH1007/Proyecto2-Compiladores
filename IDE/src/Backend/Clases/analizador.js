@@ -2,11 +2,12 @@ const parserPrincipal = require('../modelo/lenguajePrincipal');
 const parserComp = require('../modelo/lenguajeComp');
 const parserStyle = require('../modelo/lenguajeStyle');
 const parserDbase = require('../modelo/lenguajeDbase');
+const valuadorSemantico = require('./valuadorSemantico');
 const ErrorLexico = require('../Errores/errorLexico');
 const ErrorSintactico = require('../Errores/errorSintactico');
 
 class Analizador{
-    analizar(codigo, tipo) {
+    analizar(codigo, tipo, directorioBase){
         let respuesta = {
             exito: false,
             resultado: null,
@@ -14,20 +15,39 @@ class Analizador{
         };
 
         let resultado = null;
+        const semantico = new valuadorSemantico(directorioBase);
 
-        try{
+        try {
             if(tipo === 'comp') {
                 resultado = parserComp.parse(codigo);
+                const erroresSemanticos = semantico.analizar(resultado, 'comp');
+                if(erroresSemanticos.length > 0) {
+                    respuesta.errores.push(...erroresSemanticos);
+                }
             } else if(tipo === 'styles') {
                 resultado = parserStyle.parse(codigo);
             } else if(tipo === 'dbase') {
                 resultado = parserDbase.parse(codigo);
-            }else {
+            } else {
                 resultado = parserPrincipal.parse(codigo);
+                const erroresSemanticos = semantico.analizar(resultado, 'y');
+                if(erroresSemanticos.length > 0) {
+                    respuesta.errores.push(...erroresSemanticos);
+                }
             }
-            respuesta.exito = true;
-            respuesta.resultado = resultado;
-        }catch(error){
+            
+            // --- CORRECCIÓN DE LA LÓGICA ---
+            // Solo es un éxito si el arreglo de errores sigue vacío
+            if (respuesta.errores.length === 0) {
+                respuesta.exito = true;
+                respuesta.resultado = resultado;
+            } else {
+                // Si hay errores (semánticos), nos aseguramos de que exito sea false
+                respuesta.exito = false;
+                respuesta.resultado = null;
+            }
+
+        } catch(error) {
             if(error.hash){
                 const linea = error.hash.loc.first_line;
                 const columna = error.hash.loc.first_column;
@@ -47,5 +67,4 @@ class Analizador{
         return respuesta;
     }
 }
-
 module.exports = Analizador;

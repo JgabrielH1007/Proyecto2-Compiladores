@@ -11,11 +11,25 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  enviarCodigo(codigo: string, tipo: string) {
-    // Asegúrate de que apunte al localhost:3000 y a la ruta exacta
+  enviarCodigo(codigo: string, tipo: string, archivosDisponibles: string[] = []) {
     const url = 'http://localhost:3000/api/enviarCodigo'; 
-    const body = { codigo: codigo, formato: tipo };
+    const body = { 
+        codigo: codigo, 
+        formato: tipo,
+        archivos: archivosDisponibles 
+    };
     
+    return this.http.post(url, body);
+  }
+
+  ensamblarProyecto(css: string, html: string, js: string, codigoY: string = '') {
+    const url = `${this.apiUrl}/ensamblar`;
+    const body = { 
+      css: css, 
+      htmlComponentes: html, 
+      jsTraducido: js,
+      codigoY: codigoY 
+    };
     return this.http.post(url, body);
   }
 }

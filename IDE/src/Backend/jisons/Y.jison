@@ -1,6 +1,19 @@
 /* Analizador lexico del lenguaje principal */
+/* Analizador lexico del lenguaje principal */
 %{
-    // Lógica adicional del lenguaje principal
+    // Arreglo para almacenar múltiples errores sintácticos sin detener el parser
+    parser.erroresRecuperados = [];
+
+    // Sobreescribimos el método por defecto de Jison para que NO haga 'throw'
+    parser.yy.parseError = function(str, hash) {
+        if (hash.token === 'INVALID') {
+            // Es un error léxico (caracter desconocido), lo guardamos y seguimos
+            parser.erroresRecuperados.push({ tipo: 'Léxico', hash: hash });
+        } else {
+            // Es un error sintáctico, lo guardamos y dejamos que las reglas 'error' actúen
+            parser.erroresRecuperados.push({ tipo: 'Sintáctico', hash: hash });
+        }
+    };
 %}
 
 %lex

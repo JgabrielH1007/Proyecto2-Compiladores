@@ -5,6 +5,9 @@ import { FormsModule } from '@angular/forms';
 import JSZip from 'jszip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
+declare const coloreado: any;
+
+
 export interface FileSystemNode {
   name: string;
   type: 'file' | 'folder';
@@ -37,8 +40,8 @@ export class AppComponent {
   archivosCssDisponibles: FileSystemNode[] = [];
   archivosJsDisponibles: FileSystemNode[] = [];
 
-  archivoHtmlSeleccionado: FileSystemNode | null = null;
-  archivoCssSeleccionado: FileSystemNode | null = null;
+  archivosHtmlSeleccionados: FileSystemNode[] = [];
+  archivosCssSeleccionados: FileSystemNode[] = [];
   archivoJsSeleccionado: FileSystemNode | null = null;
   
 
@@ -227,32 +230,30 @@ export class AppComponent {
       highlightLayer.scrollLeft = textarea.scrollLeft;
     }
   }
+
   actualizarColoreado() {
     if (!this.editorContent) {
       this.highlightedContent = '';
       return;
     }
-    let safeCode = this.editorContent
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+  
+    try {
 
-    const regex = /(?<string>"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(?<keyword>\b(?:import|execute|load|function|main|int|float|string|boolean|char|if|else|switch|case|default|while|do|for|break|continue|TABLE|COLUMNS|IN|DELETE|T|IMG|FORM|SUBMIT|INPUT_TEXT|INPUT_NUMBER|INPUT_BOOL|each|track|empty|extends|from|through|to|base|background|color|border|bottom|top|right|left|padding|margin|radius|width|height|style|text|align|font|size)\b)|(?<literal>\b(?:\d+(?:\.\d+)?|true|false)\b)|(?<bracket>[\{\}\[\]\(\)])|(?<operator>&lt;=|&gt;=|&lt;|&gt;|&amp;&amp;|\|\||==|!=|\+\+|\+|\-|\*|\/|\%|\!|=|@)/gi;
+      let htmlCode = coloreado.parse(this.editorContent);
+  
+      if (htmlCode.endsWith('\n')) {
+        htmlCode += ' ';
+      }
+  
+      this.highlightedContent = this.sanitizer.bypassSecurityTrustHtml(htmlCode);
+    } catch (error) {
 
-    let htmlCode = safeCode.replace(regex, (match, string, keyword, literal, bracket, operator) => {
-      if (string) return `<span style="color: #FFA500;">${match}</span>`;     // Naranja
-      if (keyword) return `<span style="color: #BA68C8;">${match}</span>`;    // Morado
-      if (literal) return `<span style="color: #4DD0E1;">${match}</span>`;    // Celeste
-      if (bracket) return `<span style="color: #42A5F5;">${match}</span>`;    // Azul
-      if (operator) return `<span style="color: #4CAF50;">${match}</span>`;   // Verde
-      return match; 
-    });
-
-    if (htmlCode.endsWith('\n')) {
-      htmlCode += ' ';
+      let safeCode = this.editorContent
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      this.highlightedContent = this.sanitizer.bypassSecurityTrustHtml(safeCode);
     }
-
-    this.highlightedContent = this.sanitizer.bypassSecurityTrustHtml(htmlCode);
   }
 
   get lineNumbers(): number[] {
@@ -303,6 +304,21 @@ export class AppComponent {
     }
   }
 
+  obtenerRutasRelativas(nodos: FileSystemNode[], rutaActual: string = '.'): string[] {
+    let rutas: string[] = [];
+    //obtengo arreglo de las carpetas y archivos con su ruta relativa para enviarlo al backend y que el analizador pueda resolver imports
+    for (const nodo of nodos) {
+      if (nodo.type === 'file') {
+        rutas.push(`${rutaActual}/${nodo.name}`);
+      } else if (nodo.type === 'folder' && nodo.children) {
+        const subRutas = this.obtenerRutasRelativas(nodo.children, `${rutaActual}/${nodo.name}`);
+        rutas = rutas.concat(subRutas);
+      }
+    }
+    
+    return rutas;
+  }
+
   analizarYTraducir() {
     if (!this.activeFile) {
       alert('No hay ningún archivo abierto para analizar.');
@@ -325,8 +341,9 @@ export class AppComponent {
     
     this.listaErrores = [];
     this.mostrarErrores = false;
+    const archivosDelProyecto = this.obtenerRutasRelativas(this.fileSystem);
 
-    this.apiService.enviarCodigo(contenido, formato).subscribe({
+    this.apiService.enviarCodigo(contenido, formato, archivosDelProyecto).subscribe({
         next: (respuesta: any) => {
           console.log("Respuesta del servidor:", respuesta);
           
@@ -666,8 +683,8 @@ export class AppComponent {
   }
 
   async ejecutarConstruccionFinal() {
-    if (!this.archivoHtmlSeleccionado || !this.archivoCssSeleccionado || !this.archivoJsSeleccionado) {
-      alert("Debes seleccionar un archivo de cada tipo (HTML, CSS, JS) para construir el proyecto.");
+    if (this.archivosHtmlSeleccionados.length === 0 || this.archivosCssSeleccionados.length === 0 || !this.archivoJsSeleccionado) {
+      alert("Debes seleccionar al menos un archivo HTML, un archivo CSS y el archivo JS principal.");
       return;
     }
 
@@ -683,52 +700,63 @@ export class AppComponent {
       return file.content || '';
     };
 
-    const cssUnido = await leerContenido(this.archivoCssSeleccionado);
-    const htmlUnido = await leerContenido(this.archivoHtmlSeleccionado);
-    let jsUnido = await leerContenido(this.archivoJsSeleccionado);
-
-    const documentoFinal = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Proyecto Finalizado - YFERA IDE</title>
-    <style>
-${cssUnido}
-    </style>
-</head>
-<body>
-    <div id="yfera-root"></div>
-    
-    <div id="templates" style="display: none;">
-${htmlUnido}
-    </div>
-
-    <script>
-${jsUnido}
-    </script>
-</body>
-</html>`;
-
-    const nombreArchivoFinal = 'index_final.html';
-    let archivoFinal = this.fileSystem.find(f => f.name === nombreArchivoFinal && f.type === 'file');
-
-    if (archivoFinal) {
-      archivoFinal.content = documentoFinal;
-    } else {
-      archivoFinal = {
-        name: nombreArchivoFinal,
-        type: 'file',
-        content: documentoFinal,
-        format: 'html'
-      };
-      this.fileSystem.push(archivoFinal);
+    let cssUnido = '';
+    for (const file of this.archivosCssSeleccionados) {
+      cssUnido += await leerContenido(file) + '\n';
     }
 
-    await this.guardarArchivoFisico(null, archivoFinal);
+    let htmlUnido = '';
+    for (const file of this.archivosHtmlSeleccionados) {
+      htmlUnido += await leerContenido(file) + '\n';
+    }
+
+    const jsUnido = await leerContenido(this.archivoJsSeleccionado);// ... (después de obtener jsUnido)
+
+    const nombreBase = this.archivoJsSeleccionado.name.replace('.js', '');
+    const archivoY = this.obtenerArchivosPorExtension('y').find(f => f.name === `${nombreBase}.y`) 
+                  || this.obtenerArchivosPorExtension('principal').find(f => f.name === `${nombreBase}.principal`);
     
-    this.cerrarModalConstruir();
-    alert(`¡Construcción exitosa! Se ha generado "${nombreArchivoFinal}".`);
-    this.openFile(archivoFinal);
+    let codigoYUnido = '';
+    if (archivoY) {
+      codigoYUnido = await leerContenido(archivoY);
+    }
+
+    this.apiService.ensamblarProyecto(cssUnido, htmlUnido, jsUnido, codigoYUnido).subscribe({
+      next: async (respuesta: any) => {
+        if (respuesta.exito) {
+          
+          const documentoFinal = respuesta.htmlFinal; // El HTML que armó Node.js
+          const nombreArchivoFinal = 'index_final.html';
+          
+          let archivoFinal = this.fileSystem.find(f => f.name === nombreArchivoFinal && f.type === 'file');
+
+          if (archivoFinal) {
+            archivoFinal.content = documentoFinal;
+          } else {
+            archivoFinal = {
+              name: nombreArchivoFinal,
+              type: 'file',
+              content: documentoFinal,
+              format: 'html'
+            };
+            this.fileSystem.push(archivoFinal);
+          }
+
+          await this.guardarArchivoFisico(null, archivoFinal);
+          
+          this.cerrarModalConstruir();
+          alert(`¡Construcción exitosa! Se ha generado "${nombreArchivoFinal}".`);
+          this.openFile(archivoFinal);
+
+        } else {
+          alert("Error en el servidor al ensamblar: " + respuesta.mensaje);
+        }
+      },
+      error: (err: any) => {
+        console.error("Error de red:", err);
+        alert("No se pudo conectar con el servidor para ensamblar el proyecto.");
+      }
+    });
   }
 
   obtenerArchivosPorExtension(ext: string, nodos: FileSystemNode[] = this.fileSystem): FileSystemNode[] {
