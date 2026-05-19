@@ -43,8 +43,8 @@ class Conexion {
         const registros = [];
         let m;
         while ((m = regex.exec(htmlComponentes)) !== null) {
-            const id     = m[1];
-            const params = m[2].split(',').map(p => p.trim()).filter(Boolean);
+            const id      = m[1];
+            const params  = m[2].split(',').map(p => p.trim()).filter(Boolean);
             registros.push(`
     __registrarComponente('${id}', function(args) {
         const tmpl = document.getElementById('${id}');
@@ -54,156 +54,156 @@ class Conexion {
         const __vals   = {};
         __params.forEach(function(p, i) { __vals[p] = args[i]; });
 
-        function __render(fragment, vars) {
-            const keys   = Object.keys(vars);
-            const values = Object.values(vars);
+        function __renderizar(frag, vars) {
+            const claves  = Object.keys(vars);
+            const valores = Object.values(vars);
 
-            function __eval(expr) {
+            function __evaluar(expr) {
                 expr = String(expr).replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, '$1').trim();
                 try {
-                    return new Function(...keys, 'return (' + expr + ');')(...values);
+                    return new Function(...claves, 'return (' + expr + ');')(...valores);
                 } catch(e) { return expr; }
             }
 
-            //activar condicionales if, else if y else
-            const ifNodes = Array.from(fragment.querySelectorAll('template[data-if]')).reverse();
-            ifNodes.forEach(function(ifNode) {
-                let matched = false;
-                const nodesToRemove = [ifNode];
-                if (__eval(ifNode.getAttribute('data-if'))) {
-                    const clone = document.importNode(ifNode.content, true);
-                    __render(clone, vars);
-                    ifNode.parentNode.insertBefore(clone, ifNode);
-                    matched = true;
+            // activar condicionales if, else if y else
+            const nodosIf = Array.from(frag.querySelectorAll('template[data-if]')).reverse();
+            nodosIf.forEach(function(nodoIf) {
+                let coincidio = false;
+                const nodosEliminar = [nodoIf];
+                if (__evaluar(nodoIf.getAttribute('data-if'))) {
+                    const clon = document.importNode(nodoIf.content, true);
+                    __renderizar(clon, vars);
+                    nodoIf.parentNode.insertBefore(clon, nodoIf);
+                    coincidio = true;
                 }
-                let next = ifNode.nextElementSibling;
-                while (next) {
-                    if (next.tagName && next.tagName.toLowerCase() !== 'template') break;
-                    if (next.hasAttribute('data-elseif')) {
-                        nodesToRemove.push(next);
-                        if (!matched && __eval(next.getAttribute('data-elseif'))) {
-                            const clone = document.importNode(next.content, true);
-                            __render(clone, vars);
-                            next.parentNode.insertBefore(clone, next);
-                            matched = true;
+                let sig = nodoIf.nextElementSibling;
+                while (sig) {
+                    if (sig.tagName && sig.tagName.toLowerCase() !== 'template') break;
+                    if (sig.hasAttribute('data-elseif')) {
+                        nodosEliminar.push(sig);
+                        if (!coincidio && __evaluar(sig.getAttribute('data-elseif'))) {
+                            const clon = document.importNode(sig.content, true);
+                            __renderizar(clon, vars);
+                            sig.parentNode.insertBefore(clon, sig);
+                            coincidio = true;
                         }
-                        next = next.nextElementSibling;
-                    } else if (next.hasAttribute('data-else')) {
-                        nodesToRemove.push(next);
-                        if (!matched) {
-                            const clone = document.importNode(next.content, true);
-                            __render(clone, vars);
-                            next.parentNode.insertBefore(clone, next);
+                        sig = sig.nextElementSibling;
+                    } else if (sig.hasAttribute('data-else')) {
+                        nodosEliminar.push(sig);
+                        if (!coincidio) {
+                            const clon = document.importNode(sig.content, true);
+                            __renderizar(clon, vars);
+                            sig.parentNode.insertBefore(clon, sig);
                         }
                         break;
                     } else break;
                 }
-                nodesToRemove.forEach(n => { if (n.parentNode) n.remove(); });
+                nodosEliminar.forEach(n => { if (n.parentNode) n.remove(); });
             });
 
-            //activar switch
-            Array.from(fragment.querySelectorAll('div[data-switch]')).forEach(function(swNode) {
-                const exprVal = __eval(swNode.getAttribute('data-switch'));
-                let matched = false;
-                const result = document.createDocumentFragment();
-                Array.from(swNode.children).forEach(function(child) {
-                    if (!child.tagName || child.tagName.toLowerCase() !== 'template') return;
-                    if (!matched && child.hasAttribute('data-case')) {
-                        if (String(exprVal) === String(child.getAttribute('data-case'))) {
-                            const clone = document.importNode(child.content, true);
-                            __render(clone, vars);
-                            result.appendChild(clone);
-                            matched = true;
+            // activar switch
+            Array.from(frag.querySelectorAll('div[data-switch]')).forEach(function(nodoSwitch) {
+                const valExpr = __evaluar(nodoSwitch.getAttribute('data-switch'));
+                let coincidio = false;
+                const resultado = document.createDocumentFragment();
+                Array.from(nodoSwitch.children).forEach(function(hijo) {
+                    if (!hijo.tagName || hijo.tagName.toLowerCase() !== 'template') return;
+                    if (!coincidio && hijo.hasAttribute('data-case')) {
+                        if (String(valExpr) === String(hijo.getAttribute('data-case'))) {
+                            const clon = document.importNode(hijo.content, true);
+                            __renderizar(clon, vars);
+                            resultado.appendChild(clon);
+                            coincidio = true;
                         }
-                    } else if (!matched && child.hasAttribute('data-default')) {
-                        const clone = document.importNode(child.content, true);
-                        __render(clone, vars);
-                        result.appendChild(clone);
-                        matched = true;
+                    } else if (!coincidio && hijo.hasAttribute('data-default')) {
+                        const clon = document.importNode(hijo.content, true);
+                        __renderizar(clon, vars);
+                        resultado.appendChild(clon);
+                        coincidio = true;
                     }
                 });
-                swNode.replaceWith(result);
+                nodoSwitch.replaceWith(resultado);
             });
 
             // activar bucles for
-            Array.from(fragment.querySelectorAll(
+            Array.from(frag.querySelectorAll(
                 'template[data-fortrack], template[data-foreach]'
-            )).forEach(function(forNode) {
-                const result    = document.createDocumentFragment();
-                let mainArr     = [];
-                let iteradores  = [];
-                let indexNombre = 'index';
+            )).forEach(function(nodoBucle) {
+                const resultado   = document.createDocumentFragment();
+                let arrPrincipal  = [];
+                let iteradores    = [];
+                let nomIndice     = 'indice';
 
-                if (forNode.hasAttribute('data-foreach')) {
-                    const raw   = forNode.getAttribute('data-foreach');
-                    const parts = raw.split(':');
-                    const iter  = (parts[0] || 'item').trim();
-                    const col   = (parts[1] || '').trim();
-                    mainArr    = Array.isArray(vars[col]) ? vars[col] : [];
-                    iteradores = [{ col, iter }];
+                if (nodoBucle.hasAttribute('data-foreach')) {
+                    const raw   = nodoBucle.getAttribute('data-foreach');
+                    const partes = raw.split(':');
+                    const iter  = (partes[0] || 'item').trim();
+                    const col   = (partes[1] || '').trim();
+                    arrPrincipal = Array.isArray(vars[col]) ? vars[col] : [];
+                    iteradores   = [{ col, iter }];
                 } else {
-                    const raw   = forNode.getAttribute('data-fortrack');
-                    const track = forNode.getAttribute('data-track') || 'index';
-                    indexNombre = track.replace(/^\\$/, '').trim();
-                    const pares = raw.split(',').map(p => {
-                        const parts = p.split(':');
-                        return { iter: (parts[0]||'').trim(), col: (parts[1]||'').trim() };
+                    const raw    = nodoBucle.getAttribute('data-fortrack');
+                    const track  = nodoBucle.getAttribute('data-track') || 'indice';
+                    nomIndice    = track.replace(/^\\$/, '').trim();
+                    const pares  = raw.split(',').map(p => {
+                        const partes = p.split(':');
+                        return { iter: (partes[0]||'').trim(), col: (partes[1]||'').trim() };
                     });
-                    iteradores = pares;
+                    iteradores   = pares;
                     const primerCol = pares[0] ? pares[0].col : '';
-                    mainArr = Array.isArray(vars[primerCol]) ? vars[primerCol] : [];
+                    arrPrincipal = Array.isArray(vars[primerCol]) ? vars[primerCol] : [];
                 }
 
-                if (mainArr.length > 0) {
-                    mainArr.forEach(function(_, idx) {
-                        const localVars = Object.assign({}, vars);
-                        localVars[indexNombre] = idx;
+                if (arrPrincipal.length > 0) {
+                    arrPrincipal.forEach(function(_, idx) {
+                        const varsLocales = Object.assign({}, vars);
+                        varsLocales[nomIndice] = idx;
                         iteradores.forEach(function(par) {
                             const arr = Array.isArray(vars[par.col]) ? vars[par.col] : [];
-                            localVars[par.iter] = arr[idx];
+                            varsLocales[par.iter] = arr[idx];
                         });
-                        const clone = document.importNode(forNode.content, true);
-                        __render(clone, localVars);
-                        result.appendChild(clone);
+                        const clon = document.importNode(nodoBucle.content, true);
+                        __renderizar(clon, varsLocales);
+                        resultado.appendChild(clon);
                     });
                 } else {
-                    const emptyTmpl = forNode.nextElementSibling;
-                    if (emptyTmpl && emptyTmpl.hasAttribute && emptyTmpl.hasAttribute('data-forempty')) {
-                        const clone = document.importNode(emptyTmpl.content, true);
-                        __render(clone, vars);
-                        result.appendChild(clone);
-                        emptyTmpl.remove();
+                    const tmplVacio = nodoBucle.nextElementSibling;
+                    if (tmplVacio && tmplVacio.hasAttribute && tmplVacio.hasAttribute('data-forempty')) {
+                        const clon = document.importNode(tmplVacio.content, true);
+                        __renderizar(clon, vars);
+                        resultado.appendChild(clon);
+                        tmplVacio.remove();
                     }
                 }
-                forNode.replaceWith(result);
+                nodoBucle.replaceWith(resultado);
             });
 
-            // interpolar varibles
-            fragment.querySelectorAll('*').forEach(function(el) {
+            // interpolar variables
+            frag.querySelectorAll('*').forEach(function(el) {
                 if (el.tagName && el.tagName.toLowerCase() === 'img' && el.hasAttribute('data-src')) {
                     let dataSrc = el.getAttribute('data-src');
-                    dataSrc = dataSrc.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
+                    dataSrc = dataSrc.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __evaluar(expr); });
                     el.setAttribute('src', dataSrc);
                     el.removeAttribute('data-src');
                 }
                 Array.from(el.attributes).forEach(function(attr) {
                     if (attr.name === 'src' || attr.name === 'data-src') return;
                     if (attr.value && attr.value.includes('{{')) {
-                        attr.value = attr.value.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
+                        attr.value = attr.value.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __evaluar(expr); });
                     }
                 });
-                el.childNodes.forEach(function(node) {
-                    if (node.nodeType === 3 && node.textContent.includes('{{')) {
-                        node.textContent = node.textContent.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
+                el.childNodes.forEach(function(nodo) {
+                    if (nodo.nodeType === 3 && nodo.textContent.includes('{{')) {
+                        nodo.textContent = nodo.textContent.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __evaluar(expr); });
                     }
                 });
             });
         }
 
-        const clone = document.importNode(tmpl.content, true);
-        __render(clone, __vals);
-        const root = document.getElementById('yfera-root');
-        if (root) root.appendChild(clone);
+        const clon = document.importNode(tmpl.content, true);
+        __renderizar(clon, __vals);
+        const raiz = document.getElementById('yfera-root');
+        if (raiz) raiz.appendChild(clon);
     });`);
         }
         if (!registros.length) return '';

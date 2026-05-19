@@ -306,7 +306,7 @@ lista_valores
     | valor                   { $$ = [$1]; }
     ;
 
-/* --- FORMULARIOS --- */
+/*FORMULARIOS*/
 
 formulario
     : FORM estilos_opt '{' elementos '}' submit_opt

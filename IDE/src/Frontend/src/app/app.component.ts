@@ -441,30 +441,30 @@ export class AppComponent {
     const nombreSinExtension = nombreOriginal.substring(0, nombreOriginal.lastIndexOf('.'));
     const nuevoNombre = `${nombreSinExtension}.${nuevaExtension}`;
 
-    const parentFolder = this.findParentFolder(this.fileSystem, this.activeFile!);
-    const targetList = parentFolder && parentFolder.children ? parentFolder.children : this.fileSystem;
+    const folderPadre = this.findParentFolder(this.fileSystem, this.activeFile!);
+    const listaObje = folderPadre && folderPadre.children ? folderPadre.children : this.fileSystem;
 
-    let translatedFile = targetList.find(f => f.name === nuevoNombre && f.type === 'file');
+    let archivoTraducido = listaObje.find(f => f.name === nuevoNombre && f.type === 'file');
 
-    if (translatedFile) {
-      translatedFile.content = contenidoTraducido;
+    if (archivoTraducido) {
+      archivoTraducido.content = contenidoTraducido;
       
-      if (this.activeFile === translatedFile) {
+      if (this.activeFile === archivoTraducido) {
         this.editorContent = contenidoTraducido;
       }
     } else {
-      translatedFile = {
+      archivoTraducido = {
         name: nuevoNombre,
         type: 'file',
         content: contenidoTraducido,
         format: nuevaExtension
       };
-      targetList.push(translatedFile);
+      listaObje.push(archivoTraducido);
     }
 
-    await this.guardarArchivoFisico(parentFolder, translatedFile);
+    await this.guardarArchivoFisico(folderPadre, archivoTraducido);
 
-    this.openFile(translatedFile);
+    this.openFile(archivoTraducido);
   }
 
   findParentFolder(nodes: FileSystemNode[], targetFile: FileSystemNode): FileSystemNode | null {
@@ -524,18 +524,18 @@ export class AppComponent {
     if (event.key === 'Enter') {
       event.preventDefault(); 
 
-      const textBeforeCursor = this.editorContent.substring(0, start);
-      const linesBefore = textBeforeCursor.split('\n');
-      const currentLine = linesBefore[linesBefore.length - 1]; // La línea donde estamos dando Enter
+      const textoAntesCursor = this.editorContent.substring(0, start);
+      const lineasAntes = textoAntesCursor.split('\n');
+      const lineaActual = lineasAntes[lineasAntes.length - 1]; //línea donde se intenta dando Enter
 
-      const leadingSpacesMatch = currentLine.match(/^\s*/);
-      let spacesToInsert = leadingSpacesMatch ? leadingSpacesMatch[0] : '';
+      const espaciosMatch = lineaActual.match(/^\s*/);
+      let espaciosAInsertar = espaciosMatch ? espaciosMatch[0] : '';
 
-      if (currentLine.trim().match(/[\{\[\(]$/)) {
-        spacesToInsert += '    ';
+      if (lineaActual.trim().match(/[\{\[\(]$/)) {
+        espaciosAInsertar += '    ';
       }
 
-      const insertString = '\n' + spacesToInsert;
+      const insertString = '\n' + espaciosAInsertar;
 
       this.editorContent = this.editorContent.substring(0, start) + insertString + this.editorContent.substring(end);
       if (this.activeFile) this.activeFile.content = this.editorContent;

@@ -1,6 +1,6 @@
 /* Analizador lexico y sintactico para el lenguaje de DATABASE */
 %{
-    // Opcional: Lógica para manejar la tabla de símbolos de la DB
+    
 %}
 
 /* Analizador lexico */
