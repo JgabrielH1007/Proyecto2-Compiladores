@@ -1,7 +1,34 @@
 /* Analizador de estilos completo */
 
 %{
-    // Lógica adicional si se requiere
+    parser.erroresRecuperados = [];
+
+    var _parsOriginal = parser.parse;
+    parser.parse = function(input) {
+        this._lineasFuente = input.split('\n');
+        return _parsOriginal.call(this, input);
+    };
+
+    parser.parseError = function(str, hash) {
+        if (hash.token === 'INVALID') {
+            var lineaReal = (hash.line !== undefined) ? hash.line + 1 : (hash.loc ? hash.loc.first_line : 0);
+            var columnaReal = 0;
+            if (this._lineasFuente && hash.line !== undefined && hash.text) {
+                var contenidoLinea = this._lineasFuente[hash.line] || '';
+                var idx = contenidoLinea.indexOf(hash.text);
+                if (idx >= 0) columnaReal = idx;
+            }
+            hash.loc = { first_line: lineaReal, first_column: columnaReal, last_line: lineaReal, last_column: columnaReal + 1 };
+        }
+        if (this.erroresRecuperados) {
+            this.erroresRecuperados.push({ hash: hash });
+        }
+        if (!hash.recoverable) {
+            var error = new Error(str);
+            error.hash = hash;
+            throw error;
+        }
+    };
 %}
 
 %lex
@@ -123,7 +150,7 @@
 "%"                 return '%';
 
 <<EOF>>             return 'EOF';
-.                   { console.error('Error léxico en línea ' + yylloc.first_line + ': caracter no reconocido "' + yytext + '"'); }
+.                   { return 'INVALID'; }
 
 /lex
 
@@ -165,6 +192,7 @@ selector_clase
 
 declaraciones
     : declaraciones declaracion { $1.push($2); $$ = $1; }
+    | declaraciones error ';'   { $$ = $1; }
     | /* vacío */               { $$ = []; }
     ;
 

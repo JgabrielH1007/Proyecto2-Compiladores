@@ -1,17 +1,31 @@
 /* Analizador lexico del lenguaje principal */
-/* Analizador lexico del lenguaje principal */
 %{
-    // Arreglo para almacenar múltiples errores sintácticos sin detener el parser
     parser.erroresRecuperados = [];
 
-    // Sobreescribimos el método por defecto de Jison para que NO haga 'throw'
-    parser.yy.parseError = function(str, hash) {
+    var _parsOriginal = parser.parse;
+    parser.parse = function(input) {
+        this._lineasFuente = input.split('\n');
+        return _parsOriginal.call(this, input);
+    };
+
+    parser.parseError = function(str, hash) {
         if (hash.token === 'INVALID') {
-            // Es un error léxico (caracter desconocido), lo guardamos y seguimos
-            parser.erroresRecuperados.push({ tipo: 'Léxico', hash: hash });
-        } else {
-            // Es un error sintáctico, lo guardamos y dejamos que las reglas 'error' actúen
-            parser.erroresRecuperados.push({ tipo: 'Sintáctico', hash: hash });
+            var lineaReal = (hash.line !== undefined) ? hash.line + 1 : (hash.loc ? hash.loc.first_line : 0);
+            var columnaReal = 0;
+            if (this._lineasFuente && hash.line !== undefined && hash.text) {
+                var contenidoLinea = this._lineasFuente[hash.line] || '';
+                var idx = contenidoLinea.indexOf(hash.text);
+                if (idx >= 0) columnaReal = idx;
+            }
+            hash.loc = { first_line: lineaReal, first_column: columnaReal, last_line: lineaReal, last_column: columnaReal + 1 };
+        }
+        if (this.erroresRecuperados) {
+            this.erroresRecuperados.push({ hash: hash });
+        }
+        if (!hash.recoverable) {
+            var error = new Error(str);
+            error.hash = hash;
+            throw error;
         }
     };
 %}
@@ -87,7 +101,7 @@
 ">"                             return '>';
 
 <<EOF>>                         return 'EOF';
-.                               { console.error('Error léxico en línea ' + yylloc.first_line + ': caracter no reconocido "' + yytext + '"'); }
+.                               { return 'INVALID'; }
 
 /lex
 
@@ -110,17 +124,23 @@ inicio
 programa
     : lista_imports lista_declaraciones lista_funciones MAIN '{' instrucciones_main '}'
         { $$ = { tipo: 'PROGRAMA', imports: $1, globales: $2, funciones: $3, main: $6 }; }
+    | error EOF
+        { $$ = { tipo: 'PROGRAMA', imports: [], globales: [], funciones: [], main: [] }; }
     ;
 
 lista_imports
     : lista_imports IMPORT CADENA ';'
         { $1.push({ tipo: 'IMPORT', ruta: $3 }); $$ = $1; }
+    | lista_imports error ';'
+        { $$ = $1; }
     | /* vacío */ { $$ = []; }
     ;
 
 lista_declaraciones
     : lista_declaraciones declaracion
         { $1.push($2); $$ = $1; }
+    | lista_declaraciones error ';'
+        { $$ = $1; }
     | /* vacío */ { $$ = []; }
     ;
 
@@ -149,6 +169,7 @@ tipo
 
 lista_funciones
     : lista_funciones funcion { $1.push($2); $$ = $1; }
+    | lista_funciones error '}' { $$ = $1; }
     | /* vacío */             { $$ = []; }
     ;
 
@@ -170,6 +191,8 @@ lista_parametros
 instrucciones_funcion
     : instrucciones_funcion instruccion_funcion
         { $1.push($2); $$ = $1; }
+    | instrucciones_funcion error ';'
+        { $$ = $1; }
     | /* vacío */ { $$ = []; }
     ;
 
@@ -182,6 +205,10 @@ instruccion_funcion
 instrucciones_main
     : instrucciones_main instruccion_main
         { $1.push($2); $$ = $1; }
+    | instrucciones_main error ';'
+        { $$ = $1; }
+    | instrucciones_main error '}'
+        { yyless(0); $$ = $1; }
     | /* vacío */ { $$ = []; }
     ;
 

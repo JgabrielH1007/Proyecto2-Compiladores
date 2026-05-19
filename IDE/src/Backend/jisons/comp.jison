@@ -1,7 +1,34 @@
 /* Analizador lexico y sintactico de lenguaje de componentes */
 
 %{
+    parser.erroresRecuperados = [];
 
+    var _parsOriginal = parser.parse;
+    parser.parse = function(input) {
+        this._lineasFuente = input.split('\n');
+        return _parsOriginal.call(this, input);
+    };
+
+    parser.parseError = function(str, hash) {
+        if (hash.token === 'INVALID') {
+            var lineaReal = (hash.line !== undefined) ? hash.line + 1 : (hash.loc ? hash.loc.first_line : 0);
+            var columnaReal = 0;
+            if (this._lineasFuente && hash.line !== undefined && hash.text) {
+                var contenidoLinea = this._lineasFuente[hash.line] || '';
+                var idx = contenidoLinea.indexOf(hash.text);
+                if (idx >= 0) columnaReal = idx;
+            }
+            hash.loc = { first_line: lineaReal, first_column: columnaReal, last_line: lineaReal, last_column: columnaReal + 1 };
+        }
+        if (this.erroresRecuperados) {
+            this.erroresRecuperados.push({ hash: hash });
+        }
+        if (!hash.recoverable) {
+            var error = new Error(str);
+            error.hash = hash;
+            throw error;
+        }
+    };
 %}
 
 
@@ -84,7 +111,7 @@
 "!"                         return '!';
 
 <<EOF>>                     return 'EOF';
-.                           { console.error('Error léxico en línea ' + yylloc.first_line + ': ' + yytext); }
+.                           { return 'INVALID'; }
 
 /lex
 
@@ -106,6 +133,7 @@ inicio
 
 lista_componentes
     : lista_componentes componente { $1.push($2); $$ = $1; }
+    | lista_componentes error '}'  { $$ = $1; }
     | componente                   { $$ = [$1]; }
     ;
 
@@ -149,8 +177,10 @@ elementos
     ;
 
 elementos_no_vacio
-    : elementos_no_vacio elemento { $1.push($2); $$ = $1; }
-    | elemento                    { $$ = [$1]; }
+    : elementos_no_vacio elemento  { $1.push($2); $$ = $1; }
+    | elementos_no_vacio error ']' { $$ = $1; }
+    | elementos_no_vacio error ')' { $$ = $1; }
+    | elemento                     { $$ = [$1]; }
     ;
 
 

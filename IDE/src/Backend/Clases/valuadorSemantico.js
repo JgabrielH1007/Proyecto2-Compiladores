@@ -21,11 +21,9 @@ class valuadorSemantico {
         return this.errores;
     }
     validarComponentes(astComp) {
-        // CORRECCIÓN: Verificamos si astComp es directamente un arreglo
         const componentes = Array.isArray(astComp) ? astComp : (astComp.componentes || []); 
         
         componentes.forEach(comp => {
-            // comp.id es el nombre del componente (ej. "UserCard")
             const nuevoSimbolo = new Simbolo(comp.id, 'componente', 'componente', comp.linea, comp.columna);
             
             const agregado = this.entornoGlobal.agregar(nuevoSimbolo);

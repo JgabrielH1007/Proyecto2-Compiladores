@@ -38,7 +38,8 @@ const miAnalizador = new Analizador();
 app.post('/api/enviarCodigo', (req, res) => {
     const { codigo, formato, archivos } = req.body; 
 
-    const respuestaAnalisis = miAnalizador.analizar(codigo, formato, archivos );
+    const respuestaAnalisis = miAnalizador.analizar(codigo, formato, archivos);
+    console.log(`Análisis terminado: exito=${respuestaAnalisis.exito}, errores=${respuestaAnalisis.errores.length}`);
 
     if (!respuestaAnalisis.exito) {
         return res.json(respuestaAnalisis);
@@ -205,4 +206,12 @@ app.post('/api/ensamblar', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor Node corriendo en el puerto ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\nERROR: El puerto ${PORT} ya está en uso.`);
+        console.error(`Ejecuta: kill $(lsof -ti:${PORT}) para liberarlo.\n`);
+    } else {
+        console.error('Error al iniciar el servidor:', err.message);
+    }
+    process.exit(1);
 });

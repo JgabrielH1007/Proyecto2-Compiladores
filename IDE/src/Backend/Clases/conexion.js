@@ -7,13 +7,13 @@ class Conexion {
         const tablas = {};
         const registrar = (tabla, cols) => {
             if (!tablas[tabla]) tablas[tabla] = new Set(['id']);
-            cols.forEach(c => { if (c.trim()) tablas[tabla].add(c.trim()); });
+            cols.forEach(c => { const t = c.trim(); if (t) tablas[tabla].add(t); });
         };
         const escanear = (rawQuery) => {
             const q = rawQuery.replace(/^`|`$/g, '').trim().replace(/\s+/g, ' ');
-            const mUpdate = q.match(/^(\w+)\[(.+)\]\s+IN\s+/is);
+            const mUpdate = q.match(/^(\w+)\s*\[(.+)\]\s+IN\s+/is);
             if (mUpdate) { registrar(mUpdate[1], mUpdate[2].split(',').map(p => p.split('=')[0])); return; }
-            const mInsert = q.match(/^(\w+)\[(.+)\]$/is);
+            const mInsert = q.match(/^(\w+)\s*\[(.+)\]$/is);
             if (mInsert) { registrar(mInsert[1], mInsert[2].split(',').map(p => p.split('=')[0])); return; }
             const mTableIns = q.match(/TABLE\s+(\w+)\s*\[(.+)\]/is);
             if (mTableIns) { registrar(mTableIns[1], mTableIns[2].split(',').map(p => p.split('=')[0])); return; }
@@ -21,14 +21,18 @@ class Conexion {
             if (mDel) { registrar(mDel[1], []); return; }
             if (q.includes('.')) {
                 const dot = q.indexOf('.');
-                registrar(q.slice(0, dot).trim(), q.slice(dot + 1).trim() ? [q.slice(dot + 1).trim()] : []);
+                const tabla = q.slice(0, dot).trim();
+                const col   = q.slice(dot + 1).trim();
+                registrar(tabla, col ? [col] : []);
             }
         };
-        (ast.globales || []).forEach(d => { if (d.tipo === 'DECLARACION_ARR_DB' && d.query) escanear(d.query); });
+        (ast.globales  || []).forEach(d  => { if (d.tipo  === 'DECLARACION_ARR_DB' && d.query) escanear(d.query); });
         (ast.funciones || []).forEach(fn => { (fn.body || []).forEach(i => { if (i.tipo === 'EXECUTE' && i.query) escanear(i.query); }); });
         if (!Object.keys(tablas).length) return '';
         return Object.entries(tablas).map(([tabla, cols]) => {
-            const columnas = [...cols].map(c => c === 'id' ? 'id INTEGER PRIMARY KEY AUTOINCREMENT' : `${c} TEXT`).join(',\n        ');
+            const columnas = [...cols].map(c =>
+                c === 'id' ? 'id INTEGER PRIMARY KEY AUTOINCREMENT' : `${c} TEXT`
+            ).join(',\n        ');
             return `CREATE TABLE IF NOT EXISTS ${tabla} (\n        ${columnas}\n    );`;
         }).join('\n\n    ');
     }
@@ -44,7 +48,7 @@ class Conexion {
             registros.push(`
     __registrarComponente('${id}', function(args) {
         const tmpl = document.getElementById('${id}');
-        if (!tmpl) { console.warn('[YFERA] Template #${id} no encontrado'); return; }
+        if (!tmpl) { console.warn('Template #${id} no encontrado'); return; }
 
         const __params = ${JSON.stringify(params)};
         const __vals   = {};
@@ -55,29 +59,26 @@ class Conexion {
             const values = Object.values(vars);
 
             function __eval(expr) {
-                expr = expr.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, '$1').trim();
+                expr = String(expr).replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, '$1').trim();
                 try {
                     return new Function(...keys, 'return (' + expr + ');')(...values);
-                } catch(e) { return ''; }
+                } catch(e) { return expr; }
             }
 
-            // IF / ELSEIF / ELSE
+            //activar condicionales if, else if y else
             const ifNodes = Array.from(fragment.querySelectorAll('template[data-if]')).reverse();
             ifNodes.forEach(function(ifNode) {
                 let matched = false;
                 const nodesToRemove = [ifNode];
-
                 if (__eval(ifNode.getAttribute('data-if'))) {
                     const clone = document.importNode(ifNode.content, true);
                     __render(clone, vars);
                     ifNode.parentNode.insertBefore(clone, ifNode);
                     matched = true;
                 }
-
                 let next = ifNode.nextElementSibling;
                 while (next) {
-                    const tag = next.tagName && next.tagName.toLowerCase();
-                    if (tag !== 'template') break;
+                    if (next.tagName && next.tagName.toLowerCase() !== 'template') break;
                     if (next.hasAttribute('data-elseif')) {
                         nodesToRemove.push(next);
                         if (!matched && __eval(next.getAttribute('data-elseif'))) {
@@ -100,32 +101,31 @@ class Conexion {
                 nodesToRemove.forEach(n => { if (n.parentNode) n.remove(); });
             });
 
-            // SWITCH
+            //activar switch
             Array.from(fragment.querySelectorAll('div[data-switch]')).forEach(function(swNode) {
                 const exprVal = __eval(swNode.getAttribute('data-switch'));
                 let matched = false;
                 const result = document.createDocumentFragment();
                 Array.from(swNode.children).forEach(function(child) {
-                    if (child.tagName && child.tagName.toLowerCase() === 'template') {
-                        if (!matched && child.hasAttribute('data-case')) {
-                            if (String(exprVal) === String(child.getAttribute('data-case'))) {
-                                const clone = document.importNode(child.content, true);
-                                __render(clone, vars);
-                                result.appendChild(clone);
-                                matched = true;
-                            }
-                        } else if (!matched && child.hasAttribute('data-default')) {
+                    if (!child.tagName || child.tagName.toLowerCase() !== 'template') return;
+                    if (!matched && child.hasAttribute('data-case')) {
+                        if (String(exprVal) === String(child.getAttribute('data-case'))) {
                             const clone = document.importNode(child.content, true);
                             __render(clone, vars);
                             result.appendChild(clone);
                             matched = true;
                         }
+                    } else if (!matched && child.hasAttribute('data-default')) {
+                        const clone = document.importNode(child.content, true);
+                        __render(clone, vars);
+                        result.appendChild(clone);
+                        matched = true;
                     }
                 });
                 swNode.replaceWith(result);
             });
 
-            // FOR o FOR EACH
+            // activar bucles for
             Array.from(fragment.querySelectorAll(
                 'template[data-fortrack], template[data-foreach]'
             )).forEach(function(forNode) {
@@ -137,22 +137,21 @@ class Conexion {
                 if (forNode.hasAttribute('data-foreach')) {
                     const raw   = forNode.getAttribute('data-foreach');
                     const parts = raw.split(':');
-                    const col   = parts[0].trim();
-                    const iter  = parts[1] ? parts[1].trim() : 'item';
-                    mainArr     = Array.isArray(vars[col]) ? vars[col] : [];
-                    iteradores  = [{ col, iter }];
+                    const iter  = (parts[0] || 'item').trim();
+                    const col   = (parts[1] || '').trim();
+                    mainArr    = Array.isArray(vars[col]) ? vars[col] : [];
+                    iteradores = [{ col, iter }];
                 } else {
                     const raw   = forNode.getAttribute('data-fortrack');
                     const track = forNode.getAttribute('data-track') || 'index';
                     indexNombre = track.replace(/^\\$/, '').trim();
-
                     const pares = raw.split(',').map(p => {
-                        const [col, iter] = p.split(':');
-                        return { col: (col||'').trim(), iter: (iter||'').trim() };
+                        const parts = p.split(':');
+                        return { iter: (parts[0]||'').trim(), col: (parts[1]||'').trim() };
                     });
                     iteradores = pares;
-                    const primerArr = pares[0] ? vars[pares[0].col] : [];
-                    mainArr = Array.isArray(primerArr) ? primerArr : [];
+                    const primerCol = pares[0] ? pares[0].col : '';
+                    mainArr = Array.isArray(vars[primerCol]) ? vars[primerCol] : [];
                 }
 
                 if (mainArr.length > 0) {
@@ -179,30 +178,23 @@ class Conexion {
                 forNode.replaceWith(result);
             });
 
+            // interpolar varibles
             fragment.querySelectorAll('*').forEach(function(el) {
                 if (el.tagName && el.tagName.toLowerCase() === 'img' && el.hasAttribute('data-src')) {
                     let dataSrc = el.getAttribute('data-src');
-                    if (dataSrc.includes('{{')) {
-                        dataSrc = dataSrc.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) {
-                            return __eval(expr);
-                        });
-                    }
+                    dataSrc = dataSrc.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
                     el.setAttribute('src', dataSrc);
                     el.removeAttribute('data-src');
                 }
-
                 Array.from(el.attributes).forEach(function(attr) {
-                    if (attr.value.includes('{{')) {
-                        attr.value = attr.value.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) {
-                            return __eval(expr);
-                        });
+                    if (attr.name === 'src' || attr.name === 'data-src') return;
+                    if (attr.value && attr.value.includes('{{')) {
+                        attr.value = attr.value.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
                     }
                 });
                 el.childNodes.forEach(function(node) {
                     if (node.nodeType === 3 && node.textContent.includes('{{')) {
-                        node.textContent = node.textContent.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) {
-                            return __eval(expr);
-                        });
+                        node.textContent = node.textContent.replace(/\\{\\{([\\s\\S]+?)\\}\\}/g, function(_, expr) { return __eval(expr); });
                     }
                 });
             });
@@ -214,7 +206,6 @@ class Conexion {
         if (root) root.appendChild(clone);
     });`);
         }
-
         if (!registros.length) return '';
         return `\n<script>\n(function() {\n${registros.join('\n')}\n})();\n<\/script>`;
     }
@@ -241,34 +232,35 @@ class Conexion {
 
     window.__renderComponent = function(id, args) {
         const fn = __componentMap[id];
-        if (!fn) { console.warn('[YFERA] Componente no registrado: @' + id); return; }
+        if (!fn) { console.warn(' Componente no registrado: @' + id); return; }
         try { fn(args); }
-        catch (e) { const msg = '[YFERA] Error en @' + id + ': ' + e.message; console.error(msg); alert(msg); }
+        catch (e) { const msg = ' Error en @' + id + ': ' + e.message; console.error(msg); alert(msg); }
     };
 
     window.__dbExec = function(sql) {
-        if (!__db) { const m = '[YFERA] BD no inicializada'; alert(m); throw new Error(m); }
+        if (!__db) { const m = ' BD no inicializada'; alert(m); throw new Error(m); }
         try { __db.run(sql); }
-        catch (e) { const m = '[YFERA] Error execute:\\n' + e.message + '\\nSQL: ' + sql; alert(m); throw new Error(m); }
+        catch (e) { const m = ' Error execute:\\n' + e.message + '\\nSQL: ' + sql; alert(m); throw new Error(m); }
     };
 
     window.__dbQuery = function(sql) {
-        if (!__db) { const m = '[YFERA] BD no inicializada'; alert(m); throw new Error(m); }
+        if (!__db) { const m = ' BD no inicializada'; alert(m); throw new Error(m); }
         try {
             const res = __db.exec(sql);
             if (!res || !res.length || !res[0].values.length) return [];
             return res[0].values.map(function(f) { return f[0]; });
         }
-        catch (e) { const m = '[YFERA] Error query: ' + e.message + ' | SQL: ' + sql; alert(m); throw new Error(m); }
+        catch (e) { const m = ' Error query: ' + e.message + ' | SQL: ' + sql; alert(m); throw new Error(m); }
     };
 
     async function __inicializarDB() {
         const SQL = await initSqlJs({ locateFile: function() { return '${wasmUrl}'; } });
         __db = new SQL.Database();
+
         const schema = \`${schema}\`;
         if (schema.trim()) {
             try { __db.run(schema); }
-            catch (e) { throw new Error('[YFERA] Error schema: ' + e.message); }
+            catch (e) { throw new Error(' Error schema: ' + e.message); }
         }
     }
 
@@ -288,8 +280,8 @@ class Conexion {
         const activadorJS = this.activarTemplates(partes.htmlComponentes);
         const conexionJS  = this.generarBloqueConexion({
             schemaSQL:  (opts.schemaSQL && opts.schemaSQL.trim()) ? opts.schemaSQL : null,
-            ast:        opts.ast       ?? null,
-            sqlWasmUrl: opts.sqlWasmUrl ?? undefined
+            ast:        opts.ast ?? null,
+            sqlWasmUrl: opts.sqlWasmUrl ?? undefined,
         });
 
         return `<!DOCTYPE html>
@@ -299,34 +291,34 @@ class Conexion {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${titulo}</title>
 
-    <!-- 1. sql.js — SQLite en WebAssembly -->
+    <!-- sql.js — SQLite en WebAssembly -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"><\/script>
 
-    <!-- 2. CSS base + generado -->
     <style>
-/* Reset base */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0d0d1a; color: white; padding: 2rem; font-family: sans-serif; min-height: 100vh; }
 
-#yfera-root {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-start;
-}
-
+/* Utilidades base */
 .yfera-flex-col { display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
 img { max-width: 100%; max-height: 160px; object-fit: contain; display: block; margin: 0 auto; }
-.carousel { display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 15px 0; width: 100%; scrollbar-width: thin; }
-.carousel img { height: 140px; width: auto; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); flex-shrink: 0; }
 
+button, .base-button, .success-button {
+    cursor: pointer;
+    text-align: center;
+}
+
+input, select, textarea { box-sizing: border-box; }
+
+/* Carrusel */
+.carousel { display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 15px 0; width: 100%; scrollbar-width: thin; }
+.carousel img { height: 140px; width: auto; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+
+/* CSS generado */
 ${partes.css ?? ''}
     </style>
 </head>
 <body>
-    <!-- Punto de montaje -->
     <div id="yfera-root"></div>
 
+    <!-- HTML generado -->
     <div style="display:none;">
 ${partes.htmlComponentes ?? ''}
     </div>
@@ -336,10 +328,10 @@ ${partes.htmlComponentes ?? ''}
 ${conexionJS}
     <\/script>
 
-    <!--Activador de templates-->
+    <!-- Activador de templates -->
 ${activadorJS}
 
-    <!--JS traducido del .y-->
+    <!-- JS generado -->
     <script>
 ${partes.jsTraducido ?? ''}
     <\/script>

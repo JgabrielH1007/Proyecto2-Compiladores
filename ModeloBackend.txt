@@ -5,16 +5,18 @@ Backend
 		analizadorStyle
 	Server
 		conexion fronted
-	Traductores
-		TraductorYJavaScript
-		TraductorCompHtml
-		TraductorStyleCss
+
 	Errores
 		Error sintactico
 		Error Lexico
 	Clases o funciones
 		Analizador
-		Traductor
+		TraductorYJavaScript
+		TraductorCompHtml
+		TraductorStyleCss
+		Conexion
+		TablaSimbolos
+		EvaluadorSemantico
 	DataBases
 		
 	
