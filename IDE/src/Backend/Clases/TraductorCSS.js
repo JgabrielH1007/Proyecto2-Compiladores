@@ -112,7 +112,7 @@ class TraductorCSS {
     mapearEstiloBorde(estilo) {
         const mapa = {
             'DOTTED' : 'dotted',
-            'LINE'   : 'dashed',
+            'LINE'   : 'solid',
             'DOUBLE' : 'double',
             'SOLID'  : 'solid',
             'solid'  : 'solid',

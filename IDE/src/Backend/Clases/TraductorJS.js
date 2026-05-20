@@ -60,8 +60,9 @@ class TraductorJS {
         q = q.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g, '${$1}');
         const qUp = q.toUpperCase();
 
-        if (qUp.startsWith('TABLE') && qUp.includes(' IN ')) {
-            const m = q.match(/TABLE\s+(\w+)\s+IN\s+(.+)/i);
+        // Captura: table_name DELETE id
+        if (qUp.includes(' DELETE ')) {
+            const m = q.match(/^(\w+)\s+DELETE\s+(.+)$/i);
             if (m) return `__dbExec(\`DELETE FROM ${m[1]} WHERE id = ${m[2].trim()}\`)`;
         }
 
